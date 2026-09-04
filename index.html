@@ -330,8 +330,8 @@ let timerInterval = null;
 const DANGER_LIMIT_SECONDS = 3.0;
 let dangerTimer = 0;
 
-// 折衷平衡物理設定
-const BASE_GRAVITY = 0.82;
+// 小小幅提速：重力調至 0.87
+const BASE_GRAVITY = 0.87;
 let gravityDebuffTimer = 0;
 
 const FUSION_MAX_SELECT = 10;
@@ -373,10 +373,11 @@ function resizeBoard() {
 }
 window.addEventListener('resize', resizeBoard);
 
+// 提高迭代次數以消除微小的微振
 const engine = Engine.create({ 
   gravity: { y: BASE_GRAVITY },
-  positionIterations: 6,
-  velocityIterations: 4
+  positionIterations: 8,
+  velocityIterations: 6
 });
 const world = engine.world;
 
@@ -609,7 +610,7 @@ document.getElementById('btn-quit-confirm').onclick = () => {
   gameStatus = 'TITLE';
 };
 
-/* ================= 階段啟動與開局一次出完 ================= */
+/* ================= 階段目標與換關啟動 ================= */
 function calculateStageTarget(stage) {
   const base = selectedVariant ? selectedVariant.baseTarget : 75000;
   if (stage === 1) return base;
@@ -700,8 +701,8 @@ function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false) {
   const radius = isSpecialOrb ? SPECIAL_ORB_RADIUS : BALL_RADIUS;
   const body = Bodies.circle(x, y, radius, {
     restitution: 0.08,
-    friction: 0.2,
-    frictionAir: 0.038,
+    friction: 0.18,
+    frictionAir: 0.034, // 調降空氣阻尼，消除觸控端輕微黏滯阻力
     density: isSpecialOrb ? 0.0032 : 0.002
   });
   body.charData = char;
@@ -926,7 +927,7 @@ function triggerMilestone(charId) {
     showBanner(`警戒！${char.name}・妨害介入！`);
     if (char.id === 'abyss_slug') {
       gravityDebuffTimer = 3.5;
-      engine.gravity.y = 1.35;
+      engine.gravity.y = 1.4;
       setDialogue(selectedLeader.name, '「濁泥壓頂……盤面有些沉重，穩住步調！」');
     } else {
       balls.forEach(b => {
@@ -1068,7 +1069,7 @@ document.getElementById('btn-restart').onclick = () => {
   gameStatus = 'TITLE';
 };
 
-/* ================= 繪製循環與固定時間步長累積器 ================= */
+/* ================= 繪製循環與滑順步長累積器 ================= */
 function triggerSpark(x, y, color) {
   for (let i = 0; i < 4; i++) {
     particles.push({
@@ -1106,15 +1107,16 @@ function setDialogue(speaker, text) {
 }
 
 let rotationCounter = 0;
-const MAX_FALL_VELOCITY = 6.8;
+// 微幅放寬下落極速至 7.2
+const MAX_FALL_VELOCITY = 7.2;
 
-// 固定物理步長參數
+// 物理時間步長由 0.78 微升至 0.84（約提升 7.5% 速度，保持絲滑）
 let lastFrameTime = performance.now();
 let physicsAccumulator = 0;
-const FIXED_STEP = (1000 / 60) * 0.78; // 基準固定步長 ~13.0ms
+const FIXED_STEP = (1000 / 60) * 0.84; // ~14.0ms
 
 function mainRender(now) {
-  const dt = Math.min(now - lastFrameTime, 100); // 鉗制最大間隔 100ms 防止跳幀休眠後暴衝
+  const dt = Math.min(now - lastFrameTime, 80);
   lastFrameTime = now;
 
   if (gravityDebuffTimer > 0) {
@@ -1126,11 +1128,17 @@ function mainRender(now) {
   }
 
   if (gameStatus === 'PLAYING') {
-    // 跨裝置時間步長累積器：確保任何更新率下，每秒物理演算量完全恆定
     physicsAccumulator += dt;
-    while (physicsAccumulator >= FIXED_STEP) {
+    // 限制單幀最多推進 4 步，徹底根除手機端累積延遲帶來的微停頓
+    let steps = 0;
+    while (physicsAccumulator >= FIXED_STEP && steps < 4) {
       Engine.update(engine, FIXED_STEP);
       physicsAccumulator -= FIXED_STEP;
+      steps++;
+    }
+    // 若累積過多直接截斷，確保觸控端反應零延遲
+    if (physicsAccumulator > FIXED_STEP * 2) {
+      physicsAccumulator = 0;
     }
 
     for (let b of balls) {
@@ -1145,7 +1153,7 @@ function mainRender(now) {
     checkDangerOverflow();
   }
 
-  rotationCounter += 0.025;
+  rotationCounter += 0.026;
 
   const dpr = window.devicePixelRatio || 1;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
