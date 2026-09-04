@@ -52,7 +52,7 @@
     canvas { width: 100%; height: 100%; display: block; }
     
     #top-action-bar {
-      position: absolute; top: 10px; left: 12px; right: 12px; display: flex; justify-content: flex-end; align-items: center; z-index: 5;
+      position: absolute; top: 22px; left: 12px; right: 12px; display: flex; justify-content: flex-end; align-items: center; z-index: 5;
     }
 
     #btn-manual-drop {
@@ -62,15 +62,26 @@
     }
     #btn-manual-drop:active { transform: scale(0.92); background: rgba(255, 152, 0, 0.45); }
 
+    /* 頂部紅線：移至極頂端 (top: 14px) */
     #danger-line {
-      position: absolute; top: 48px; left: 0; width: 100%; height: 2px;
+      position: absolute; top: 14px; left: 0; width: 100%; height: 2px;
       background: repeating-linear-gradient(90deg, #ff1744, #ff1744 6px, transparent 6px, transparent 12px);
       display: flex; align-items: center; justify-content: flex-end; padding-right: 8px;
-      font-size: 9px; color: #ff5252; opacity: 0.65;
+      font-size: 10px; color: #ff5252; opacity: 0.5; transition: opacity 0.2s; z-index: 4;
+    }
+    #danger-line.alert {
+      background: #ff1744; box-shadow: 0 0 10px #ff1744; opacity: 1;
+      animation: alertBlink 0.6s infinite alternate;
+    }
+    @keyframes alertBlink { from { opacity: 0.7; } to { opacity: 1; } }
+
+    #danger-countdown {
+      font-weight: 900; color: #fff; background: #d50000; padding: 2px 6px;
+      border-radius: 4px; margin-left: 6px; display: none; font-size: 11px;
     }
 
     #side-trackers {
-      position: absolute; right: 6px; top: 54px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 4;
+      position: absolute; right: 6px; top: 56px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 4;
     }
     .tracker-node {
       display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.65);
@@ -140,7 +151,7 @@
       <div class="title-logo">ELETSUM</div>
       <div class="title-sub">ELEMENTAL CHAIN BURST</div>
       <p style="font-size: 12px; color: #aaa; max-width: 260px; line-height: 1.5; margin-bottom: 24px;">
-        點擊相連同色珠直接引爆！引爆多顆權能珠時將連續發動。與獸人夥伴調和元素刻印，突破極限盤面。
+        點擊相連同色珠直接引爆！注意頂部警戒線，若持續積壓將會崩潰。
       </p>
       <button class="btn" id="btn-enter-game">進入共鳴空間</button>
     </div>
@@ -160,7 +171,10 @@
       <div id="top-action-bar">
         <button id="btn-manual-drop">+ 補給落球</button>
       </div>
-      <div id="danger-line">溢出警戒線</div>
+      <div id="danger-line">
+        <span id="danger-label">頂部過載警戒</span>
+        <span id="danger-countdown">3.0s</span>
+      </div>
       <div id="side-trackers"></div>
       <div id="banner-notify">權能發動</div>
       <canvas id="gameCanvas"></canvas>
@@ -190,7 +204,7 @@
     <div id="modal-match-brief" class="overlay-modal" style="display: none;">
       <div class="modal-card">
         <h3>本局 5 元素配置</h3>
-        <p style="font-size: 11px; color: #aaa; margin: 3px 0 10px 0;">點擊相鄰 3 顆以上珠子直接引爆消除</p>
+        <p style="font-size: 11px; color: #aaa; margin: 3px 0 10px 0;">開局盤面一次就緒，堆疊超過頂部紅線 3 秒將會失敗</p>
         <div id="brief-characters" style="display: flex; flex-direction: column; gap: 6px; text-align: left; max-height: 260px; overflow-y: auto;"></div>
         <button class="btn" id="btn-start-play">展開盤面</button>
       </div>
@@ -221,7 +235,7 @@
 </div>
 
 <script>
-/* ================= 角色資料庫與插圖分支 ================= */
+/* ================= 角色資料庫與分支 ================= */
 const CHARACTER_DATABASE = [
   {
     id: 'kulu', name: '克爾', element: '融元素', color: '#1a3b5c', border: '#ff3333',
@@ -278,9 +292,11 @@ let gameStatus = 'TITLE';
 const GAME_DURATION = 180;
 let timeRemaining = GAME_DURATION;
 let timerInterval = null;
+
+// 警戒線倒數監控
+const DANGER_LIMIT_SECONDS = 3.0;
 let dangerTimer = 0;
 
-// 中間值重力平衡參數
 const BASE_GRAVITY = 0.88;
 let gravityDebuffTimer = 0;
 
@@ -294,6 +310,8 @@ const { Engine, World, Bodies, Body } = Matter;
 const boardWrapper = document.getElementById('board-wrapper');
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const dangerLineEl = document.getElementById('danger-line');
+const dangerCountdownEl = document.getElementById('danger-countdown');
 
 let width, height;
 function resizeBoard() {
@@ -315,7 +333,7 @@ const world = engine.world;
 
 const BALL_RADIUS = 25;
 const SPECIAL_ORB_RADIUS = 34;
-const MAX_BALLS = 78;
+const MAX_BALLS = 68;
 const balls = [];
 let particles = [];
 
@@ -329,7 +347,7 @@ function setupBoundaries() {
   World.add(world, [floor, leftWall, rightWall]);
 }
 
-/* ================= 高畫質頭像離線快取 ================= */
+/* ================= 高畫質頭像快取 ================= */
 const charImageCache = {};
 function createHiResAvatarCache(char, isSpecial = false) {
   const offscreen = document.createElement('canvas');
@@ -533,7 +551,7 @@ document.getElementById('btn-quit-confirm').onclick = () => {
   gameStatus = 'TITLE';
 };
 
-/* ================= 遊戲核心啟動與適中落球控制 ================= */
+/* ================= 開局一次到位 ================= */
 function startGame() {
   resizeBoard();
   balls.forEach(b => World.remove(world, b));
@@ -544,6 +562,9 @@ function startGame() {
   skillQueue.length = 0;
   currentScore = 0;
   dangerTimer = 0;
+  dangerLineEl.classList.remove('alert');
+  dangerCountdownEl.style.display = 'none';
+
   gravityDebuffTimer = 0;
   engine.gravity.y = BASE_GRAVITY;
   timeRemaining = GAME_DURATION;
@@ -566,10 +587,29 @@ function startGame() {
     }
   }, 1000);
 
-  setDialogue(selectedLeader.name, '「看好相鄰的刻印群直接點擊。盤面已經灌滿，按照自己的節奏來。」');
+  setDialogue(selectedLeader.name, '「看好相鄰的刻印群直接點擊。盤面已經一次到位，開始吧！」');
   gameStatus = 'PLAYING';
   
-  refillBalls(MAX_BALLS, true);
+  spawnOpeningWave(MAX_BALLS);
+}
+
+function spawnOpeningWave(total) {
+  const cols = 7;
+  const colSpacing = (width - 60) / (cols - 1);
+  let spawned = 0;
+  let row = 0;
+
+  while (spawned < total) {
+    for (let c = 0; c < cols && spawned < total; c++) {
+      const jitterX = (Math.random() - 0.5) * 8;
+      const x = 30 + c * colSpacing + jitterX;
+      // 均勻分佈在盤面上方，避開頂部邊緣
+      const y = (height * 0.14) + (row * 36) + (Math.random() * 8);
+      spawnSingleBall(x, y);
+      spawned++;
+    }
+    row++;
+  }
 }
 
 function updateTimerDisplay() {
@@ -587,14 +627,13 @@ function getRandomWeightedChar() {
   return currentMatchChars[4];
 }
 
-// 珠子物理配置：黃金適中阻尼
 function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false) {
   const char = forcedChar || getRandomWeightedChar();
   const radius = isSpecialOrb ? SPECIAL_ORB_RADIUS : BALL_RADIUS;
   const body = Bodies.circle(x, y, radius, {
     restitution: 0.08,
     friction: 0.2,
-    frictionAir: 0.035, // 調整至 0.035，滑順彈嫩不拖沓
+    frictionAir: 0.035,
     density: isSpecialOrb ? 0.0032 : 0.002
   });
   body.charData = char;
@@ -608,15 +647,13 @@ function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false) {
   return body;
 }
 
-function refillBalls(targetCount, isOpening = false) {
-  const needed = Math.min(targetCount - balls.length, 14);
+function refillBalls(targetCount) {
+  const needed = Math.min(targetCount - balls.length, 12);
   if (needed <= 0) return;
 
   for (let i = 0; i < needed; i++) {
     const rx = Math.random() * (width - 90) + 45;
-    const ry = isOpening 
-      ? (height * 0.1) - (Math.random() * (height * 0.75))
-      : -BALL_RADIUS - (i * 32) - (Math.random() * 20);
+    const ry = -BALL_RADIUS - (i * 32) - (Math.random() * 20);
     spawnSingleBall(rx, ry);
   }
 }
@@ -636,7 +673,7 @@ setInterval(() => {
   }
 }, 4000);
 
-/* ================= 點擊直接引爆 (BFS) 與連鎖權能排程 ================= */
+/* ================= 點擊直接引爆 (BFS) 與連鎖權能 ================= */
 function getPointerCoord(e) {
   const rect = canvas.getBoundingClientRect();
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -706,7 +743,6 @@ function findClusterAround(centerBall, maxLimit) {
   return sorted.slice(0, maxLimit);
 }
 
-/* ================= 技能佇列與連續發動系統 ================= */
 function queueSkillTrigger(orb) {
   if (!skillQueue.includes(orb)) {
     skillQueue.push(orb);
@@ -773,7 +809,7 @@ function processNextSkillInQueue() {
 
 canvas.addEventListener('pointerdown', e => handleTap(getPointerCoord(e)));
 
-/* ================= 消除、權能累計與連帶權能珠偵測 ================= */
+/* ================= 消除與連鎖累計 ================= */
 function executeElimination(chain) {
   const count = chain.length;
   let gained = 0;
@@ -810,7 +846,6 @@ function executeElimination(chain) {
   }
 
   chainedSpecialOrbs.forEach(orb => queueSkillTrigger(orb));
-
   setTimeout(() => refillBalls(MAX_BALLS), 450);
 }
 
@@ -849,23 +884,40 @@ function updateScore(delta) {
   }
 }
 
+/* ================= 修正後的頂部實質溢出判定 ================= */
 function checkDangerOverflow() {
   if (gameStatus !== 'PLAYING') return;
-  let overflowing = false;
+
+  // 判定線移至極頂端 y < 18，且珠子必須是堆疊穩定（速度小於 0.35），排除連續落下中的新球
+  let hasRealOverflow = false;
   for (let b of balls) {
-    if (b.position.y < 48 && b.velocity.y > -0.12 && b.velocity.y < 0.12) {
-      overflowing = true;
+    if (b.position.y < 18 && Math.abs(b.velocity.y) < 0.35) {
+      hasRealOverflow = true;
       break;
     }
   }
 
-  if (overflowing) {
+  if (hasRealOverflow) {
     dangerTimer += 1 / 60;
-    if (dangerTimer > 3.4) {
-      gameFail('能量頂部滿溢過載，盤面崩潰。');
+    const remainingTime = Math.max(0, DANGER_LIMIT_SECONDS - dangerTimer);
+
+    dangerLineEl.classList.add('alert');
+    dangerCountdownEl.style.display = 'inline-block';
+    dangerCountdownEl.innerText = `${remainingTime.toFixed(1)}s`;
+
+    if (dangerTimer >= DANGER_LIMIT_SECONDS) {
+      gameFail('盤面能量持續溢出頂部，空間過載崩潰。');
     }
   } else {
-    dangerTimer = Math.max(0, dangerTimer - 1 / 60);
+    if (dangerTimer > 0) {
+      dangerTimer = Math.max(0, dangerTimer - (1.5 / 60));
+      const remainingTime = Math.max(0, DANGER_LIMIT_SECONDS - dangerTimer);
+      dangerCountdownEl.innerText = `${remainingTime.toFixed(1)}s`;
+      if (dangerTimer <= 0) {
+        dangerLineEl.classList.remove('alert');
+        dangerCountdownEl.style.display = 'none';
+      }
+    }
   }
 }
 
@@ -897,7 +949,8 @@ function gameWin() {
 
 function gameFail(reason) {
   endGameSession();
-  document.getElementById('modal-result').style.display = 'flex';
+  const resModal = document.getElementById('modal-result');
+  resModal.style.display = 'flex';
   document.getElementById('result-cg-tag').style.display = 'none';
   document.getElementById('result-title').innerText = '連結中斷 (失敗)';
   document.getElementById('result-title').style.color = '#ff1744';
@@ -911,7 +964,7 @@ document.getElementById('btn-restart').onclick = () => {
   gameStatus = 'TITLE';
 };
 
-/* ================= 繪製與適中步長循環 ================= */
+/* ================= 畫面繪製循環 ================= */
 function triggerSpark(x, y, color) {
   for (let i = 0; i < 4; i++) {
     particles.push({
@@ -949,7 +1002,6 @@ function setDialogue(speaker, text) {
 }
 
 let rotationCounter = 0;
-// 極速封頂在 7.8，自然滑順
 const MAX_FALL_VELOCITY = 7.8;
 
 function mainRender() {
@@ -961,7 +1013,6 @@ function mainRender() {
     }
   }
 
-  // 步長調整為 0.82 倍，恰到好處的遊玩節奏
   Engine.update(engine, (1000 / 60) * 0.82);
 
   for (let b of balls) {
