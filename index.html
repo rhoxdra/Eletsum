@@ -152,7 +152,7 @@
       <div class="title-logo">ELETSUM</div>
       <div class="title-sub">ELEMENTAL CHAIN BURST</div>
       <p style="font-size: 12px; color: #aaa; max-width: 260px; line-height: 1.5; margin-bottom: 24px;">
-        點擊相連同色珠直接引爆！注意頂部過載警戒。
+        與同行隊長連攜突破 3 個共鳴階段！注意頂部過載警戒。
       </p>
       <button class="btn" id="btn-enter-game">進入共鳴空間</button>
     </div>
@@ -250,7 +250,7 @@
 </div>
 
 <script>
-/* ================= 角色資料庫與打氣台詞 ================= */
+/* ================= 角色資料庫 ================= */
 const CHARACTER_DATABASE = [
   {
     id: 'kulu', name: '克爾', element: '融元素', color: '#1a3b5c', border: '#ff3333',
@@ -310,7 +310,7 @@ for (let i = 7; i < 50; i++) {
   });
 }
 
-/* ================= 遊戲核心狀態 ================= */
+/* ================= 遊戲核心與三階段狀態 ================= */
 let selectedLeader = CHARACTER_DATABASE[0];
 let selectedVariant = selectedLeader.variants ? selectedLeader.variants[0] : null;
 let currentMatchChars = [];
@@ -330,14 +330,15 @@ let timerInterval = null;
 const DANGER_LIMIT_SECONDS = 3.0;
 let dangerTimer = 0;
 
-const BASE_GRAVITY = 0.88;
+// 折衷平衡物理設定
+const BASE_GRAVITY = 0.82;
 let gravityDebuffTimer = 0;
 
 const FUSION_MAX_SELECT = 10;
 let fusionBeams = null;
 let isCastingSkill = false;
 
-/* ================= 固定虛擬解析度 ================= */
+/* ================= 跨裝置固定虛擬解析度 ================= */
 const VIRTUAL_WIDTH = 400;
 const VIRTUAL_HEIGHT = 680;
 const VIRTUAL_DANGER_Y = 28;
@@ -384,7 +385,7 @@ const SPECIAL_ORB_RADIUS = 34;
 const MAX_BALLS = 68;
 const balls = [];
 let particles = [];
-let floatingScores = []; // 獨立浮動分數文字列表
+let floatingScores = [];
 
 let floor, leftWall, rightWall;
 function setupBoundaries() {
@@ -700,7 +701,7 @@ function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false) {
   const body = Bodies.circle(x, y, radius, {
     restitution: 0.08,
     friction: 0.2,
-    frictionAir: 0.035,
+    frictionAir: 0.038,
     density: isSpecialOrb ? 0.0032 : 0.002
   });
   body.charData = char;
@@ -792,7 +793,6 @@ function findConnectedSameTypeCluster(startBall) {
   while (queue.length > 0) {
     const current = queue.shift();
     for (let other of balls) {
-      // 常規連鎖絕不引爆任何權能珠
       if (!visited.has(other) && !other.isSpecialOrb && other.charData.id === targetType) {
         const d = Math.hypot(current.position.x - other.position.x, current.position.y - other.position.y);
         if (d < CONNECT_DIST) {
@@ -805,7 +805,6 @@ function findConnectedSameTypeCluster(startBall) {
   return Array.from(visited);
 }
 
-// 嚴格隔離：克爾權能鎖定時，強制過濾掉其他權能珠 (!b.isSpecialOrb)
 function findClusterAroundExcludingSpecial(centerBall, maxLimit) {
   const sorted = [...balls]
     .filter(b => b !== centerBall && !b.isSpecialOrb)
@@ -817,7 +816,6 @@ function findClusterAroundExcludingSpecial(centerBall, maxLimit) {
   return sorted.slice(0, maxLimit);
 }
 
-/* ================= 技能執行（權能珠保護防波及） ================= */
 function executeSingleSkill(orb) {
   if (isCastingSkill || gameStatus !== 'PLAYING') return;
 
@@ -828,7 +826,6 @@ function executeSingleSkill(orb) {
     showBanner('【融態共鳴】全面融聚引爆！');
     setDialogue('克爾', '「界線撕開了……周圍全部融在一起引爆！」');
 
-    // 嚴格鎖定非權能珠
     const targets = findClusterAroundExcludingSpecial(orb, FUSION_MAX_SELECT);
     fusionBeams = targets.map(t => ({ from: orb, to: t }));
 
@@ -847,7 +844,6 @@ function executeSingleSkill(orb) {
     }, 380);
 
   } else {
-    // 澤里恩等角色爆破中央：同樣保護其他權能珠不被引爆 (!b.isSpecialOrb)
     createVFX(orb.position.x, orb.position.y, '#ffffff', 32);
     World.remove(world, orb);
     const orbIdx = balls.indexOf(orb);
@@ -866,7 +862,7 @@ function executeSingleSkill(orb) {
 
 canvas.addEventListener('pointerdown', e => handleTap(getPointerCoord(e)));
 
-/* ================= 消除與每顆珠子浮動分數顯示 ================= */
+/* ================= 消除與每顆珠子浮動分數 ================= */
 function addFloatingScore(x, y, points, color = '#ffffff') {
   floatingScores.push({
     x: x,
@@ -874,7 +870,7 @@ function addFloatingScore(x, y, points, color = '#ffffff') {
     text: `+${points}`,
     color: color,
     life: 1.0,
-    vy: -1.2 // 緩慢向上漂浮
+    vy: -1.2
   });
 }
 
@@ -885,7 +881,6 @@ function executeElimination(chain) {
   const multiplier = 1 + (count - 3) * 0.35;
 
   chain.forEach(b => {
-    // 雙重防護：普通消除絕不波及權能珠
     if (b.isSpecialOrb) return;
 
     const isLdr = (b.charData.id === selectedLeader.id);
@@ -893,7 +888,6 @@ function executeElimination(chain) {
     const finalPerBall = Math.floor(basePts * multiplier);
     gained += finalPerBall;
 
-    // 在珠子位置產生漂浮分數
     addFloatingScore(b.position.x, b.position.y, finalPerBall, isLdr ? '#ff9800' : '#45f3ff');
 
     counted[b.charData.id] = (counted[b.charData.id] || 0) + 1;
@@ -932,7 +926,7 @@ function triggerMilestone(charId) {
     showBanner(`警戒！${char.name}・妨害介入！`);
     if (char.id === 'abyss_slug') {
       gravityDebuffTimer = 3.5;
-      engine.gravity.y = 1.4;
+      engine.gravity.y = 1.35;
       setDialogue(selectedLeader.name, '「濁泥壓頂……盤面有些沉重，穩住步調！」');
     } else {
       balls.forEach(b => {
@@ -1074,7 +1068,7 @@ document.getElementById('btn-restart').onclick = () => {
   gameStatus = 'TITLE';
 };
 
-/* ================= 繪製循環與浮動分數渲染 ================= */
+/* ================= 繪製循環與固定時間步長累積器 ================= */
 function triggerSpark(x, y, color) {
   for (let i = 0; i < 4; i++) {
     particles.push({
@@ -1112,11 +1106,19 @@ function setDialogue(speaker, text) {
 }
 
 let rotationCounter = 0;
-const MAX_FALL_VELOCITY = 7.8;
+const MAX_FALL_VELOCITY = 6.8;
 
-function mainRender() {
+// 固定物理步長參數
+let lastFrameTime = performance.now();
+let physicsAccumulator = 0;
+const FIXED_STEP = (1000 / 60) * 0.78; // 基準固定步長 ~13.0ms
+
+function mainRender(now) {
+  const dt = Math.min(now - lastFrameTime, 100); // 鉗制最大間隔 100ms 防止跳幀休眠後暴衝
+  lastFrameTime = now;
+
   if (gravityDebuffTimer > 0) {
-    gravityDebuffTimer -= 1 / 60;
+    gravityDebuffTimer -= dt / 1000;
     if (gravityDebuffTimer <= 0) {
       engine.gravity.y = BASE_GRAVITY;
       gravityDebuffTimer = 0;
@@ -1124,7 +1126,12 @@ function mainRender() {
   }
 
   if (gameStatus === 'PLAYING') {
-    Engine.update(engine, (1000 / 60) * 0.82);
+    // 跨裝置時間步長累積器：確保任何更新率下，每秒物理演算量完全恆定
+    physicsAccumulator += dt;
+    while (physicsAccumulator >= FIXED_STEP) {
+      Engine.update(engine, FIXED_STEP);
+      physicsAccumulator -= FIXED_STEP;
+    }
 
     for (let b of balls) {
       if (b.velocity.y > MAX_FALL_VELOCITY) {
@@ -1220,7 +1227,7 @@ function mainRender() {
     ctx.globalAlpha = 1;
   }
 
-  // 4. 浮動分數繪製（短暫漂浮 + 淡出）
+  // 4. 浮動分數繪製
   ctx.save();
   ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, sans-serif';
   ctx.textAlign = 'center';
@@ -1229,7 +1236,7 @@ function mainRender() {
   for (let i = floatingScores.length - 1; i >= 0; i--) {
     const fs = floatingScores[i];
     fs.y += fs.vy;
-    fs.life -= 0.032; // 約維持 0.6 秒
+    fs.life -= 0.032;
 
     if (fs.life <= 0) {
       floatingScores.splice(i, 1);
