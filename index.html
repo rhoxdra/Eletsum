@@ -2,37 +2,43 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Eletsum - 元素共鳴消除</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #0b0c10; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    
+    body, html {
+      width: 100%; height: 100%; height: 100dvh; overflow: hidden;
+      background: #0b0c10; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
     #bg-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden; }
     #game-bg {
       position: absolute; top: 0; left: 0; height: 100%; width: 220%;
       background: linear-gradient(135deg, #10141d 0%, #0b0c10 50%, #1e1124 100%);
       background-size: cover; background-position: center;
-      animation: panBackground 28s ease-in-out infinite alternate;
+      animation: panBackground 30s ease-in-out infinite alternate;
       transition: filter 0.5s;
     }
     @keyframes panBackground { 0% { transform: translateX(0%); } 100% { transform: translateX(-45%); } }
 
     #main-wrapper {
-      position: relative; z-index: 1; width: 100vw; height: 100vh;
+      position: relative; z-index: 1; width: 100vw; height: 100%; height: 100dvh;
       display: flex; justify-content: center; align-items: center;
     }
     #game-frame {
-      position: relative; width: 100%; height: 100%; max-width: 440px; max-height: 920px;
+      position: relative; width: 100%; height: 100%; max-width: 440px;
       display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 0 35px rgba(0,0,0,0.9);
       border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06);
     }
 
     #top-hud {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 12px; background: rgba(11, 12, 16, 0.85); backdrop-filter: blur(10px);
+      padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px 12px;
+      background: rgba(11, 12, 16, 0.88); backdrop-filter: blur(10px);
       color: #fff; font-size: 12px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1);
+      z-index: 5;
     }
     .hud-bar { width: 85px; height: 8px; background: #252836; border-radius: 4px; overflow: hidden; margin-top: 3px; }
     .hud-progress { height: 100%; width: 0%; background: #45f3ff; transition: width 0.2s; }
@@ -45,18 +51,10 @@
     #board-wrapper { position: relative; flex: 1; width: 100%; overflow: hidden; }
     canvas { width: 100%; height: 100%; display: block; }
     
-    /* 頂部操作列（危險線上方） */
     #top-action-bar {
-      position: absolute; top: 10px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; z-index: 5;
+      position: absolute; top: 10px; left: 12px; right: 12px; display: flex; justify-content: flex-end; align-items: center; z-index: 5;
     }
-    #fusion-indicator {
-      font-size: 11px; font-weight: bold; color: #ff5722; background: rgba(0,0,0,0.7);
-      padding: 4px 8px; border-radius: 12px; border: 1px solid #ff5722; display: none;
-      animation: pulse 0.8s infinite alternate;
-    }
-    @keyframes pulse { from { opacity: 0.7; } to { opacity: 1; transform: scale(1.03); } }
 
-    /* 手動補球按鈕置頂 */
     #btn-manual-drop {
       background: rgba(255, 152, 0, 0.25); border: 1.5px solid #ff9800; color: #ffb74d;
       padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: bold;
@@ -71,7 +69,6 @@
       font-size: 9px; color: #ff5252; opacity: 0.65;
     }
 
-    /* 右側 5 角色計數器 */
     #side-trackers {
       position: absolute; right: 6px; top: 54px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 4;
     }
@@ -83,8 +80,10 @@
     .tracker-val { color: #fff; font-size: 10px; font-weight: bold; min-width: 26px; }
 
     #bottom-dialogue-box {
-      min-height: 72px; padding: 8px 12px; background: rgba(11, 12, 16, 0.9); backdrop-filter: blur(10px);
+      min-height: 80px; padding: 10px 14px calc(env(safe-area-inset-bottom, 16px) + 10px) 14px;
+      background: rgba(11, 12, 16, 0.92); backdrop-filter: blur(12px);
       border-top: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; justify-content: center;
+      z-index: 5;
     }
     .dialogue-speaker { font-size: 12px; color: #45f3ff; font-weight: bold; margin-bottom: 2px; }
     .dialogue-text { font-size: 12px; color: #e0e0e0; line-height: 1.35; }
@@ -97,7 +96,7 @@
     }
     .modal-card {
       background: #181d26; border: 1px solid #45f3ff; border-radius: 12px;
-      padding: 18px; width: 100%; max-width: 360px; max-height: 86vh; overflow-y: auto;
+      padding: 18px; width: 100%; max-width: 360px; max-height: 84vh; overflow-y: auto;
     }
     .btn {
       background: #45f3ff; color: #0b0c10; font-weight: bold; border: none;
@@ -116,9 +115,7 @@
     .leader-item.selected { border-color: #ff5722; background: #261919; }
     .clear-badge { font-size: 9px; color: #ffeb3b; display: block; margin-top: 2px; }
 
-    .variant-selector {
-      margin: 10px 0; display: flex; gap: 6px; justify-content: center;
-    }
+    .variant-selector { margin: 10px 0; display: flex; gap: 6px; justify-content: center; }
     .variant-btn {
       font-size: 10px; padding: 4px 8px; border-radius: 12px; background: #121820; border: 1px solid #555; color: #bbb; cursor: pointer;
     }
@@ -139,17 +136,15 @@
 <div id="main-wrapper">
   <div id="game-frame">
 
-    <!-- 開始主畫面 -->
     <div id="title-screen" class="overlay-modal">
       <div class="title-logo">ELETSUM</div>
-      <div class="title-sub">ELEMENTAL CHAIN RESONANCE</div>
+      <div class="title-sub">ELEMENTAL CHAIN BURST</div>
       <p style="font-size: 12px; color: #aaa; max-width: 260px; line-height: 1.5; margin-bottom: 24px;">
-        與獸人夥伴調和元素刻印，發動權能共鳴，突破極限盤面。
+        點擊相連同色珠直接引爆！引爆多顆權能珠時將連續發動。與獸人夥伴調和元素刻印，突破極限盤面。
       </p>
       <button class="btn" id="btn-enter-game">進入共鳴空間</button>
     </div>
 
-    <!-- 頂部 HUD -->
     <div id="top-hud">
       <div>
         目標: <span id="score-text">0</span> / <span id="target-score">42000</span>
@@ -157,16 +152,12 @@
       </div>
       <div class="hud-timer" id="timer-text">03:00</div>
       <div style="display: flex; gap: 6px; align-items: center;">
-        <span style="font-size: 11px;">連線: <b id="chain-text" style="color: #45f3ff;">0</b></span>
         <button class="btn-icon" id="btn-open-quit">放棄</button>
       </div>
     </div>
 
-    <!-- 實體盤面 -->
     <div id="board-wrapper">
       <div id="top-action-bar">
-        <div id="fusion-indicator">【融聚充能中：下一次可任意連線 10 顆】</div>
-        <div style="flex: 1;"></div>
         <button id="btn-manual-drop">+ 補給落球</button>
       </div>
       <div id="danger-line">溢出警戒線</div>
@@ -175,13 +166,11 @@
       <canvas id="gameCanvas"></canvas>
     </div>
 
-    <!-- 底部對話 -->
     <div id="bottom-dialogue-box">
       <div id="speaker-name" class="dialogue-speaker">克爾</div>
-      <div id="dialogue-content" class="dialogue-text">「速戰速決。盤面雜質太多，抓緊節奏全部融掉。」</div>
+      <div id="dialogue-content" class="dialogue-text">「速戰速決。看準聚集的刻印直接點爆，別讓雜質堆滿盤面。」</div>
     </div>
 
-    <!-- 隊長選擇彈窗 -->
     <div id="modal-select-leader" class="overlay-modal" style="display: none;">
       <div class="modal-card">
         <h3>選擇同行隊長</h3>
@@ -198,17 +187,15 @@
       </div>
     </div>
 
-    <!-- 開局 5 角色提示 -->
     <div id="modal-match-brief" class="overlay-modal" style="display: none;">
       <div class="modal-card">
         <h3>本局 5 元素配置</h3>
-        <p style="font-size: 11px; color: #aaa; margin: 3px 0 10px 0;">隊長出現率 30%，其餘由正向與干擾構成</p>
+        <p style="font-size: 11px; color: #aaa; margin: 3px 0 10px 0;">點擊相鄰 3 顆以上珠子直接引爆消除</p>
         <div id="brief-characters" style="display: flex; flex-direction: column; gap: 6px; text-align: left; max-height: 260px; overflow-y: auto;"></div>
         <button class="btn" id="btn-start-play">展開盤面</button>
       </div>
     </div>
 
-    <!-- 放棄確認 -->
     <div id="modal-confirm-quit" class="overlay-modal" style="display: none;">
       <div class="modal-card" style="max-width: 280px;">
         <h3>中斷連結？</h3>
@@ -220,7 +207,6 @@
       </div>
     </div>
 
-    <!-- 結算畫面 -->
     <div id="modal-result" class="overlay-modal" style="display: none;">
       <div class="modal-card">
         <h2 id="result-title">共鳴達成！</h2>
@@ -240,7 +226,7 @@ const CHARACTER_DATABASE = [
   {
     id: 'kulu', name: '克爾', element: '融元素', color: '#1a3b5c', border: '#ff3333',
     type: 'positive', reqLeader: 11, reqSupport: 16,
-    desc: '【融態共鳴】生成特殊球，點擊後獲得充能：下一次消除可跨種族、無距限制任意劃選最多 10 顆！',
+    desc: '【融態共鳴】生成巨大特殊權能珠，點擊即刻拉出融聚光束，將周圍相鄰 10 顆任意珠子連鎖引爆！',
     cleared: true,
     variants: [
       { id: 'default', title: '常規：元素調和', targetScore: 42000, bgHue: 'normal', quote: '「幹得俐落。這場打下來節奏掌握得很好。」' },
@@ -250,19 +236,19 @@ const CHARACTER_DATABASE = [
   {
     id: 'zarion', name: '澤里恩', element: '耀元素', color: '#546e7a', border: '#ffa726',
     type: 'positive', reqLeader: 13, reqSupport: 18,
-    desc: '【耀斑蘊華】生成特殊球，引爆中央並轉化高分球。',
+    desc: '【耀斑蘊華】生成特殊權能珠，點擊直接引爆中央大片盤面並轉化高分。',
     cleared: false
   },
   {
     id: 'abyss_slug', name: '濁泥獸', element: '濁元素', color: '#2b2b2b', border: '#78909c',
     type: 'negative', reqLeader: 12, reqSupport: 13,
-    desc: '【濁質沉降】消滿自動觸發，盤面重力加倍並黏滯 4 秒。',
+    desc: '【濁質沉降】消滿自動觸發，盤面重力稍微提升並維持 3.5 秒。',
     cleared: false
   },
   {
     id: 'disorder_wisp', name: '紊亂精怪', element: '噪元素', color: '#3a2d3c', border: '#ba68c8',
     type: 'negative', reqLeader: 13, reqSupport: 14,
-    desc: '【空間紊動】消滿自動觸發，向上震盪隨機炸散相連球體。',
+    desc: '【空間紊動】消滿自動觸發，向上柔和震盪打散相連球體。',
     cleared: false
   },
   {
@@ -294,16 +280,20 @@ let timeRemaining = GAME_DURATION;
 let timerInterval = null;
 let dangerTimer = 0;
 
-// 克爾能力狀態：是否持有「下一次任意選 10 顆」的充能
-let hasKuluFusionCharge = false;
+// 中間值重力平衡參數
+const BASE_GRAVITY = 0.88;
+let gravityDebuffTimer = 0;
+
 const FUSION_MAX_SELECT = 10;
+let fusionBeams = null;
+let isCastingSkill = false;
+const skillQueue = [];
 
 /* ================= Matter.js 與物理邊界 ================= */
 const { Engine, World, Bodies, Body } = Matter;
 const boardWrapper = document.getElementById('board-wrapper');
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const fusionIndicator = document.getElementById('fusion-indicator');
 
 let width, height;
 function resizeBoard() {
@@ -312,19 +302,22 @@ function resizeBoard() {
   canvas.width = width * window.devicePixelRatio;
   canvas.height = height * window.devicePixelRatio;
   ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+  setupBoundaries();
 }
 window.addEventListener('resize', resizeBoard);
-resizeBoard();
 
-const engine = Engine.create({ gravity: { y: 1.5 } });
+const engine = Engine.create({ 
+  gravity: { y: BASE_GRAVITY },
+  positionIterations: 6,
+  velocityIterations: 4
+});
 const world = engine.world;
 
-const BALL_RADIUS = 26;
-const MAX_BALLS = 45;
+const BALL_RADIUS = 25;
+const SPECIAL_ORB_RADIUS = 34;
+const MAX_BALLS = 78;
 const balls = [];
 let particles = [];
-let selectedChain = [];
-let isInteracting = false;
 
 let floor, leftWall, rightWall;
 function setupBoundaries() {
@@ -335,13 +328,12 @@ function setupBoundaries() {
   rightWall = Bodies.rectangle(width + wallT / 2, height / 2, wallT, height * 2, { isStatic: true });
   World.add(world, [floor, leftWall, rightWall]);
 }
-setupBoundaries();
 
 /* ================= 高畫質頭像離線快取 ================= */
 const charImageCache = {};
-function createHiResAvatarCache(char) {
+function createHiResAvatarCache(char, isSpecial = false) {
   const offscreen = document.createElement('canvas');
-  const size = 128;
+  const size = isSpecial ? 160 : 128;
   offscreen.width = size;
   offscreen.height = size;
   const oCtx = offscreen.getContext('2d');
@@ -355,13 +347,13 @@ function createHiResAvatarCache(char) {
   oCtx.fillRect(0, 0, size, size);
 
   const grad = oCtx.createRadialGradient(size/2, size/3, 10, size/2, size/2, size/2);
-  grad.addColorStop(0, 'rgba(255,255,255,0.3)');
-  grad.addColorStop(1, 'rgba(0,0,0,0.55)');
+  grad.addColorStop(0, 'rgba(255,255,255,0.35)');
+  grad.addColorStop(1, 'rgba(0,0,0,0.6)');
   oCtx.fillStyle = grad;
   oCtx.fillRect(0, 0, size, size);
 
   oCtx.fillStyle = '#ffffff';
-  oCtx.font = 'bold 36px sans-serif';
+  oCtx.font = `bold ${isSpecial ? 42 : 36}px sans-serif`;
   oCtx.textAlign = 'center';
   oCtx.textBaseline = 'middle';
   oCtx.fillText(char.name.substring(0, 2), size/2, size/2);
@@ -369,15 +361,18 @@ function createHiResAvatarCache(char) {
 
   oCtx.beginPath();
   oCtx.arc(size/2, size/2, size/2 - 4, 0, Math.PI * 2);
-  oCtx.lineWidth = 6;
-  oCtx.strokeStyle = char.border;
+  oCtx.lineWidth = isSpecial ? 8 : 6;
+  oCtx.strokeStyle = isSpecial ? '#ffd700' : char.border;
   oCtx.stroke();
 
   return offscreen;
 }
-CHARACTER_DATABASE.forEach(c => { charImageCache[c.id] = createHiResAvatarCache(c); });
+CHARACTER_DATABASE.forEach(c => {
+  charImageCache[c.id] = createHiResAvatarCache(c, false);
+  charImageCache[c.id + '_special'] = createHiResAvatarCache(c, true);
+});
 
-/* ================= 5 角色池抽取 ================= */
+/* ================= 角色抽取與追蹤器 ================= */
 function setupMatchPool() {
   currentMatchChars = [];
   currentTrackers = {};
@@ -427,7 +422,7 @@ function updateTrackersUI(charId) {
   }
 }
 
-/* ================= UI 與隊長分支切換 ================= */
+/* ================= UI 事件綁定 ================= */
 document.getElementById('btn-enter-game').onclick = () => {
   document.getElementById('title-screen').style.display = 'none';
   document.getElementById('modal-select-leader').style.display = 'flex';
@@ -538,15 +533,19 @@ document.getElementById('btn-quit-confirm').onclick = () => {
   gameStatus = 'TITLE';
 };
 
-/* ================= 遊戲核心與手動落球 ================= */
+/* ================= 遊戲核心啟動與適中落球控制 ================= */
 function startGame() {
+  resizeBoard();
   balls.forEach(b => World.remove(world, b));
   balls.length = 0;
   particles.length = 0;
+  fusionBeams = null;
+  isCastingSkill = false;
+  skillQueue.length = 0;
   currentScore = 0;
   dangerTimer = 0;
-  hasKuluFusionCharge = false;
-  fusionIndicator.style.display = 'none';
+  gravityDebuffTimer = 0;
+  engine.gravity.y = BASE_GRAVITY;
   timeRemaining = GAME_DURATION;
   updateScore(0);
   updateTimerDisplay();
@@ -567,9 +566,10 @@ function startGame() {
     }
   }, 1000);
 
-  setDialogue(selectedLeader.name, '「調和就緒。按照剛才說好的，把阻礙一口氣融開。」');
+  setDialogue(selectedLeader.name, '「看好相鄰的刻印群直接點擊。盤面已經灌滿，按照自己的節奏來。」');
   gameStatus = 'PLAYING';
-  refillBalls(MAX_BALLS);
+  
+  refillBalls(MAX_BALLS, true);
 }
 
 function updateTimerDisplay() {
@@ -587,44 +587,56 @@ function getRandomWeightedChar() {
   return currentMatchChars[4];
 }
 
+// 珠子物理配置：黃金適中阻尼
 function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false) {
   const char = forcedChar || getRandomWeightedChar();
-  const body = Bodies.circle(x, y, BALL_RADIUS, {
-    restitution: 0.12, friction: 0.05, density: 0.002
+  const radius = isSpecialOrb ? SPECIAL_ORB_RADIUS : BALL_RADIUS;
+  const body = Bodies.circle(x, y, radius, {
+    restitution: 0.08,
+    friction: 0.2,
+    frictionAir: 0.035, // 調整至 0.035，滑順彈嫩不拖沓
+    density: isSpecialOrb ? 0.0032 : 0.002
   });
   body.charData = char;
   body.isSpecialOrb = isSpecialOrb;
+  body.radius = radius;
+  Body.setVelocity(body, { x: 0, y: 0 });
+  Body.setAngularVelocity(body, 0);
+
   balls.push(body);
   World.add(world, body);
   return body;
 }
 
-function refillBalls(targetCount) {
-  const needed = targetCount - balls.length;
+function refillBalls(targetCount, isOpening = false) {
+  const needed = Math.min(targetCount - balls.length, 14);
+  if (needed <= 0) return;
+
   for (let i = 0; i < needed; i++) {
-    const rx = Math.random() * (width - 80) + 40;
-    const ry = -BALL_RADIUS - (Math.random() * 220);
+    const rx = Math.random() * (width - 90) + 45;
+    const ry = isOpening 
+      ? (height * 0.1) - (Math.random() * (height * 0.75))
+      : -BALL_RADIUS - (i * 32) - (Math.random() * 20);
     spawnSingleBall(rx, ry);
   }
 }
 
-// 置頂補球按鈕
 document.getElementById('btn-manual-drop').onclick = () => {
-  if (gameStatus !== 'PLAYING') return;
+  if (gameStatus !== 'PLAYING' || isCastingSkill) return;
   for (let i = 0; i < 5; i++) {
     const rx = Math.random() * (width - 80) + 40;
-    const ry = -BALL_RADIUS - (i * 25);
+    const ry = -BALL_RADIUS - (i * 30);
     spawnSingleBall(rx, ry);
   }
 };
 
 setInterval(() => {
-  if (gameStatus === 'PLAYING' && balls.length < MAX_BALLS) {
+  if (gameStatus === 'PLAYING' && balls.length < MAX_BALLS && !isCastingSkill) {
     refillBalls(MAX_BALLS);
   }
-}, 3500);
+}, 4000);
 
-/* ================= 觸控與連線判定 ================= */
+/* ================= 點擊直接引爆 (BFS) 與連鎖權能排程 ================= */
 function getPointerCoord(e) {
   const rect = canvas.getBoundingClientRect();
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -632,112 +644,158 @@ function getPointerCoord(e) {
   return { x: clientX - rect.left, y: clientY - rect.top };
 }
 
-function handleStart(pos) {
-  if (gameStatus !== 'PLAYING') return;
-  isInteracting = true;
-  selectedChain = [];
-  checkBallUnderPointer(pos);
-}
+function handleTap(pos) {
+  if (gameStatus !== 'PLAYING' || isCastingSkill) return;
 
-function handleMove(pos) {
-  if (!isInteracting || gameStatus !== 'PLAYING') return;
-  checkBallUnderPointer(pos);
-}
-
-function handleEnd() {
-  if (!isInteracting) return;
-  isInteracting = false;
-
-  if (selectedChain.length >= 3) {
-    executeElimination(selectedChain);
-    // 若本次劃線是使用克爾的充能，結算後消耗該次機會
-    if (hasKuluFusionCharge) {
-      hasKuluFusionCharge = false;
-      fusionIndicator.style.display = 'none';
-      setDialogue('克爾', '「融聚釋放完畢。回到常規步調。」');
-    }
-  }
-  selectedChain = [];
-  document.getElementById('chain-text').innerText = '0';
-}
-
-canvas.addEventListener('mousedown', e => handleStart(getPointerCoord(e)));
-window.addEventListener('mousemove', e => handleMove(getPointerCoord(e)));
-window.addEventListener('mouseup', handleEnd);
-
-canvas.addEventListener('touchstart', e => { e.preventDefault(); handleStart(getPointerCoord(e)); }, { passive: false });
-window.addEventListener('touchmove', e => { if (isInteracting) e.preventDefault(); handleMove(getPointerCoord(e)); }, { passive: false });
-window.addEventListener('touchend', handleEnd);
-
-function checkBallUnderPointer(pos) {
+  let clickedBall = null;
   for (let b of balls) {
     const dist = Math.hypot(b.position.x - pos.x, b.position.y - pos.y);
-    if (dist < BALL_RADIUS * 1.3) {
-      if (b.isSpecialOrb) {
-        triggerSpecialOrbSkill(b);
-        return;
-      }
-
-      if (selectedChain.length === 0) {
-        selectedChain.push(b);
-        triggerSpark(b.position.x, b.position.y, b.charData.border);
-        document.getElementById('chain-text').innerText = '1';
-      } else {
-        const last = selectedChain[selectedChain.length - 1];
-        if (last === b) return;
-
-        // 回退退選
-        if (selectedChain.length > 1 && selectedChain[selectedChain.length - 2] === b) {
-          selectedChain.pop();
-          document.getElementById('chain-text').innerText = selectedChain.length;
-          return;
-        }
-
-        if (selectedChain.includes(b)) return;
-
-        // 連線規則分支：
-        if (hasKuluFusionCharge) {
-          // 克爾權能：打破角色限制與距離限制，任意選取最多 10 顆
-          if (selectedChain.length < FUSION_MAX_SELECT) {
-            selectedChain.push(b);
-            triggerSpark(b.position.x, b.position.y, '#ff5722');
-            document.getElementById('chain-text').innerText = `${selectedChain.length}/${FUSION_MAX_SELECT}`;
-          }
-        } else {
-          // 常規規則：必須同角色且在相鄰距離內
-          const isSame = (b.charData.id === last.charData.id);
-          if (isSame) {
-            const dBetween = Math.hypot(b.position.x - last.position.x, b.position.y - last.position.y);
-            if (dBetween < BALL_RADIUS * 2.8) {
-              selectedChain.push(b);
-              triggerSpark(b.position.x, b.position.y, b.charData.border);
-              document.getElementById('chain-text').innerText = selectedChain.length;
-            }
-          }
-        }
-      }
+    if (dist <= b.radius * 1.35) {
+      clickedBall = b;
       break;
     }
   }
+
+  if (!clickedBall) return;
+
+  if (clickedBall.isSpecialOrb) {
+    queueSkillTrigger(clickedBall);
+    return;
+  }
+
+  const cluster = findConnectedSameTypeCluster(clickedBall);
+  if (cluster.length >= 3) {
+    executeElimination(cluster);
+  } else {
+    cluster.forEach(b => {
+      Body.applyForce(b, b.position, { x: (Math.random() - 0.5) * 0.01, y: -0.005 });
+      triggerSpark(b.position.x, b.position.y, '#555');
+    });
+  }
 }
 
-/* ================= 消除、權能與結算 ================= */
+function findConnectedSameTypeCluster(startBall) {
+  const targetType = startBall.charData.id;
+  const visited = new Set([startBall]);
+  const queue = [startBall];
+  const CONNECT_DIST = BALL_RADIUS * 3.0;
+
+  while (queue.length > 0) {
+    const current = queue.shift();
+    for (let other of balls) {
+      if (!visited.has(other) && !other.isSpecialOrb && other.charData.id === targetType) {
+        const d = Math.hypot(current.position.x - other.position.x, current.position.y - other.position.y);
+        if (d < CONNECT_DIST) {
+          visited.add(other);
+          queue.push(other);
+        }
+      }
+    }
+  }
+  return Array.from(visited);
+}
+
+function findClusterAround(centerBall, maxLimit) {
+  const sorted = [...balls]
+    .filter(b => b !== centerBall && !b.isSpecialOrb)
+    .sort((a, b) => {
+      const da = Math.hypot(a.position.x - centerBall.position.x, a.position.y - centerBall.position.y);
+      const db = Math.hypot(b.position.x - centerBall.position.x, b.position.y - centerBall.position.y);
+      return da - db;
+    });
+  return sorted.slice(0, maxLimit);
+}
+
+/* ================= 技能佇列與連續發動系統 ================= */
+function queueSkillTrigger(orb) {
+  if (!skillQueue.includes(orb)) {
+    skillQueue.push(orb);
+  }
+  processNextSkillInQueue();
+}
+
+function processNextSkillInQueue() {
+  if (isCastingSkill || skillQueue.length === 0 || gameStatus !== 'PLAYING') return;
+
+  const orb = skillQueue.shift();
+  if (!balls.includes(orb)) {
+    processNextSkillInQueue();
+    return;
+  }
+
+  isCastingSkill = true;
+  const char = orb.charData;
+
+  if (char.id === 'kulu') {
+    showBanner('【融態共鳴】全面融聚引爆！');
+    setDialogue('克爾', '「界線撕開了……周圍全部融在一起引爆！」');
+
+    const targets = findClusterAround(orb, FUSION_MAX_SELECT);
+    fusionBeams = targets.map(t => ({ from: orb, to: t }));
+
+    targets.forEach(b => triggerSpark(b.position.x, b.position.y, '#ff5722'));
+
+    setTimeout(() => {
+      fusionBeams = null;
+      createVFX(orb.position.x, orb.position.y, '#ffffff', 32);
+      World.remove(world, orb);
+      const orbIdx = balls.indexOf(orb);
+      if (orbIdx !== -1) balls.splice(orbIdx, 1);
+
+      executeElimination(targets);
+      isCastingSkill = false;
+      setDialogue('克爾', '「融聚完成。繼續穩住步調！」');
+
+      if (skillQueue.length > 0) {
+        setTimeout(processNextSkillInQueue, 300);
+      }
+    }, 380);
+
+  } else {
+    createVFX(orb.position.x, orb.position.y, '#ffffff', 32);
+    World.remove(world, orb);
+    const orbIdx = balls.indexOf(orb);
+    if (orbIdx !== -1) balls.splice(orbIdx, 1);
+
+    showBanner(`${char.name}・耀斑爆發！`);
+    const centerTargets = [...balls]
+      .sort((a, b) => Math.hypot(a.position.x - width/2, a.position.y - height/2) - Math.hypot(b.position.x - width/2, b.position.y - height/2))
+      .slice(0, 12);
+
+    executeElimination(centerTargets);
+    isCastingSkill = false;
+
+    if (skillQueue.length > 0) {
+      setTimeout(processNextSkillInQueue, 300);
+    }
+  }
+}
+
+canvas.addEventListener('pointerdown', e => handleTap(getPointerCoord(e)));
+
+/* ================= 消除、權能累計與連帶權能珠偵測 ================= */
 function executeElimination(chain) {
   const count = chain.length;
   let gained = 0;
   const counted = {};
+  const chainedSpecialOrbs = [];
 
   chain.forEach(b => {
+    if (b.isSpecialOrb) {
+      chainedSpecialOrbs.push(b);
+      return;
+    }
+
     const isLdr = (b.charData.id === selectedLeader.id);
-    gained += (isLdr ? 125 : 100);
+    gained += (isLdr ? 130 : 100);
     counted[b.charData.id] = (counted[b.charData.id] || 0) + 1;
-    createVFX(b.position.x, b.position.y, b.charData.border);
+    createVFX(b.position.x, b.position.y, b.charData.border, 8);
     World.remove(world, b);
     const idx = balls.indexOf(b);
     if (idx !== -1) balls.splice(idx, 1);
   });
 
-  gained = Math.floor(gained * (1 + (count - 3) * 0.3));
+  gained = Math.floor(gained * (1 + (count - 3) * 0.35));
   updateScore(gained);
 
   for (let cid in counted) {
@@ -751,7 +809,9 @@ function executeElimination(chain) {
     }
   }
 
-  setTimeout(() => refillBalls(MAX_BALLS), 180);
+  chainedSpecialOrbs.forEach(orb => queueSkillTrigger(orb));
+
+  setTimeout(() => refillBalls(MAX_BALLS), 450);
 }
 
 function triggerMilestone(charId) {
@@ -759,46 +819,22 @@ function triggerMilestone(charId) {
   if (!char) return;
 
   if (char.type === 'positive') {
-    showBanner(`${char.name}・權能球凝縮！`);
-    const rx = Math.random() * (width - 80) + 40;
-    spawnSingleBall(rx, -25, char, true);
-    setDialogue(char.name, '「能量已就緒，隨時引爆突破！」');
+    showBanner(`${char.name}・巨大權能珠凝縮！`);
+    const rx = Math.random() * (width - 100) + 50;
+    spawnSingleBall(rx, -40, char, true);
+    setDialogue(char.name, '「核心能量已就緒，直接點擊引爆它！」');
   } else if (char.type === 'negative') {
     showBanner(`警戒！${char.name}・妨害介入！`);
     if (char.id === 'abyss_slug') {
-      engine.gravity.y = 3.6;
-      setDialogue(selectedLeader.name, '「濁質沉降……重力暴增，撐住盤面！」');
-      setTimeout(() => { engine.gravity.y = 1.5; }, 4000);
+      gravityDebuffTimer = 3.5;
+      engine.gravity.y = 1.4;
+      setDialogue(selectedLeader.name, '「濁泥壓頂……盤面有些沉重，穩住步調！」');
     } else {
       balls.forEach(b => {
-        Body.applyForce(b, b.position, { x: (Math.random() - 0.5) * 0.05, y: -0.07 });
+        Body.applyForce(b, b.position, { x: (Math.random() - 0.5) * 0.025, y: -0.03 });
       });
-      setDialogue(selectedLeader.name, '「盤面被震散了，重新看清楚相鄰的刻印！」');
+      setDialogue(selectedLeader.name, '「盤面被震動撥開了，重新看清楚群聚的刻印！」');
     }
-  }
-}
-
-// 點擊特殊球發動
-function triggerSpecialOrbSkill(orb) {
-  const char = orb.charData;
-  World.remove(world, orb);
-  const idx = balls.indexOf(orb);
-  if (idx !== -1) balls.splice(idx, 1);
-
-  createVFX(orb.position.x, orb.position.y, '#ffffff', 28);
-
-  if (char.id === 'kulu') {
-    // 克爾權能：啟動充能，下一次可任意連線 10 顆
-    hasKuluFusionCharge = true;
-    fusionIndicator.style.display = 'block';
-    showBanner('【融聚充能】下一次可任意消 10 顆！');
-    setDialogue('克爾', '「抓準機會。下一次直接指定 10 顆，不管是誰通通融掉！」');
-  } else {
-    showBanner(`${char.name}・耀斑爆發！`);
-    const centerTargets = [...balls]
-      .sort((a, b) => Math.hypot(a.position.x - width/2, a.position.y - height/2) - Math.hypot(b.position.x - width/2, b.position.y - height/2))
-      .slice(0, 9);
-    executeElimination(centerTargets);
   }
 }
 
@@ -817,7 +853,7 @@ function checkDangerOverflow() {
   if (gameStatus !== 'PLAYING') return;
   let overflowing = false;
   for (let b of balls) {
-    if (b.position.y < 48 && b.velocity.y > -0.2 && b.velocity.y < 0.2) {
+    if (b.position.y < 48 && b.velocity.y > -0.12 && b.velocity.y < 0.12) {
       overflowing = true;
       break;
     }
@@ -825,7 +861,7 @@ function checkDangerOverflow() {
 
   if (overflowing) {
     dangerTimer += 1 / 60;
-    if (dangerTimer > 2.5) {
+    if (dangerTimer > 3.4) {
       gameFail('能量頂部滿溢過載，盤面崩潰。');
     }
   } else {
@@ -875,11 +911,11 @@ document.getElementById('btn-restart').onclick = () => {
   gameStatus = 'TITLE';
 };
 
-/* ================= 畫面繪製管線 ================= */
+/* ================= 繪製與適中步長循環 ================= */
 function triggerSpark(x, y, color) {
   for (let i = 0; i < 4; i++) {
     particles.push({
-      x, y, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3,
+      x, y, vx: (Math.random() - 0.5) * 2.8, vy: (Math.random() - 0.5) * 2.8,
       life: 0.7, color, size: 2.5
     });
   }
@@ -888,7 +924,7 @@ function triggerSpark(x, y, color) {
 function createVFX(x, y, color, count = 8) {
   for (let i = 0; i < count; i++) {
     const ang = Math.random() * Math.PI * 2;
-    const spd = Math.random() * 5 + 2;
+    const spd = Math.random() * 3.0 + 1.4;
     particles.push({
       x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
       life: 0.9, color, size: Math.random() * 3 + 2.5
@@ -904,7 +940,7 @@ function showBanner(text) {
   setTimeout(() => {
     banner.style.opacity = '0';
     banner.style.transform = 'translate(-50%, -50%) scale(0.8)';
-  }, 1100);
+  }, 1150);
 }
 
 function setDialogue(speaker, text) {
@@ -912,56 +948,83 @@ function setDialogue(speaker, text) {
   document.getElementById('dialogue-content').innerText = text;
 }
 
+let rotationCounter = 0;
+// 極速封頂在 7.8，自然滑順
+const MAX_FALL_VELOCITY = 7.8;
+
 function mainRender() {
-  Engine.update(engine, 1000 / 60);
+  if (gravityDebuffTimer > 0) {
+    gravityDebuffTimer -= 1 / 60;
+    if (gravityDebuffTimer <= 0) {
+      engine.gravity.y = BASE_GRAVITY;
+      gravityDebuffTimer = 0;
+    }
+  }
+
+  // 步長調整為 0.82 倍，恰到好處的遊玩節奏
+  Engine.update(engine, (1000 / 60) * 0.82);
+
+  for (let b of balls) {
+    if (b.velocity.y > MAX_FALL_VELOCITY) {
+      Body.setVelocity(b, { x: b.velocity.x, y: MAX_FALL_VELOCITY });
+    }
+    if (Math.abs(b.velocity.x) > MAX_FALL_VELOCITY) {
+      Body.setVelocity(b, { x: Math.sign(b.velocity.x) * MAX_FALL_VELOCITY, y: b.velocity.y });
+    }
+  }
+
   checkDangerOverflow();
+  rotationCounter += 0.025;
 
   ctx.clearRect(0, 0, width, height);
 
-  // 連線劃線渲染
-  if (selectedChain.length > 1) {
+  // 1. 克爾融聚連鎖光束
+  if (fusionBeams && fusionBeams.length > 0) {
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(selectedChain[0].position.x, selectedChain[0].position.y);
-    for (let i = 1; i < selectedChain.length; i++) {
-      ctx.lineTo(selectedChain[i].position.x, selectedChain[i].position.y);
-    }
-    // 融聚充能中時連線呈現鮮亮橙紅光芒
-    ctx.strokeStyle = hasKuluFusionCharge ? '#ff5722' : selectedChain[0].charData.border;
-    ctx.lineWidth = 11;
+    fusionBeams.forEach(b => {
+      ctx.moveTo(b.from.position.x, b.from.position.y);
+      ctx.lineTo(b.to.position.x, b.to.position.y);
+    });
+    ctx.strokeStyle = '#ff5722';
+    ctx.lineWidth = 10;
     ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.shadowColor = ctx.strokeStyle;
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#ff3d00';
+    ctx.shadowBlur = 18;
     ctx.stroke();
-    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    fusionBeams.forEach(b => {
+      ctx.moveTo(b.from.position.x, b.from.position.y);
+      ctx.lineTo(b.to.position.x, b.to.position.y);
+    });
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3.5;
+    ctx.stroke();
+    ctx.restore();
   }
 
-  // 球體
+  // 2. 珠體繪製
   balls.forEach(b => {
-    const isSelected = selectedChain.includes(b);
     ctx.save();
     ctx.translate(b.position.x, b.position.y);
     ctx.rotate(b.angle);
 
-    const imgCache = charImageCache[b.charData.id];
-    if (imgCache) {
-      ctx.drawImage(imgCache, -BALL_RADIUS, -BALL_RADIUS, BALL_RADIUS * 2, BALL_RADIUS * 2);
-    }
+    const cacheKey = b.isSpecialOrb ? (b.charData.id + '_special') : b.charData.id;
+    const imgCache = charImageCache[cacheKey] || charImageCache[b.charData.id];
+    const r = b.radius;
 
-    if (isSelected) {
-      ctx.beginPath();
-      ctx.arc(0, 0, BALL_RADIUS + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 3.5;
-      ctx.strokeStyle = '#ffffff';
-      ctx.stroke();
+    if (imgCache) {
+      ctx.drawImage(imgCache, -r, -r, r * 2, r * 2);
     }
 
     if (b.isSpecialOrb) {
+      ctx.rotate(rotationCounter);
       ctx.beginPath();
-      ctx.arc(0, 0, BALL_RADIUS + 4, 0, Math.PI * 2);
-      ctx.lineWidth = 3;
+      ctx.arc(0, 0, r + 5, 0, Math.PI * 2);
+      ctx.lineWidth = 4;
       ctx.strokeStyle = '#ffd700';
-      ctx.setLineDash([5, 3]);
+      ctx.setLineDash([8, 5]);
       ctx.stroke();
       ctx.setLineDash([]);
     }
@@ -969,12 +1032,12 @@ function mainRender() {
     ctx.restore();
   });
 
-  // 粒子
+  // 3. 粒子特效
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
     p.x += p.vx;
     p.y += p.vy;
-    p.life -= 0.035;
+    p.life -= 0.028;
     if (p.life <= 0) {
       particles.splice(i, 1);
       continue;
@@ -990,7 +1053,7 @@ function mainRender() {
   requestAnimationFrame(mainRender);
 }
 
-mainRender();
+requestAnimationFrame(mainRender);
 </script>
 </body>
 </html>
