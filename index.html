@@ -215,7 +215,7 @@
       <div class="title-logo">ELETSUM</div>
       <div class="title-sub">ELEMENTAL CHAIN BURST</div>
       <p style="font-size: 12px; color: #aaa; max-width: 260px; line-height: 1.5; margin-bottom: 24px;">
-        已精準更新嵐懶（洗版+左右重力）、犺（隨機消除5顆珠）與埒（重力上浮+消除5個妨礙珠）的技能機制！
+        已更新各關卡專屬角色抽選邏輯！
       </p>
       <div class="title-btn-group">
         <button class="btn" id="btn-enter-game">進入共鳴空間</button>
@@ -253,7 +253,7 @@
     <div id="modal-select-leader" class="overlay-modal" style="display: none;">
       <div class="modal-card">
         <h3>選擇同行隊長</h3>
-        <p style="font-size: 11px; color: #aaa; margin-top: 3px;">共 50 位官方夥伴可選，享有專屬對話與結算圖</p>
+        <p style="font-size: 11px; color: #aaa; margin-top: 3px;">共 51 位官方夥伴可選，享有專屬對話與結算圖</p>
         <div class="leader-grid" id="leader-list"></div>
         
         <div id="variant-box" style="display: none;">
@@ -272,8 +272,8 @@
     <!-- 本局五元素配置彈窗 -->
     <div id="modal-match-brief" class="overlay-modal" style="display: none;">
       <div class="modal-card">
-        <h3>本局 5 元素配置</h3>
-        <p style="font-size: 11px; color: #aaa; margin: 3px 0 10px 0;">標準過關模式：連破 3 個共鳴階段！</p>
+        <h3>本局 Stage 1 元素配置</h3>
+        <p style="font-size: 11px; color: #aaa; margin: 3px 0 10px 0;">第一關卡：隊長 + 1正向賦形者 + 2妨礙賦形者 + 1屬性或無能力者</p>
         <div id="brief-characters" style="display: flex; flex-direction: column; gap: 6px; text-align: left; max-height: 260px; overflow-y: auto;"></div>
         <div style="display: flex; gap: 8px; margin-top: 14px;">
           <button class="btn" id="btn-start-play" style="flex: 1; margin-top: 0;">展開盤面</button>
@@ -393,9 +393,9 @@ function resetToTitleScreen() {
 
 setGlobalBackground('images/background.webp', false, false);
 
-/* ================= 50 位正式官方角色資料庫 ================= */
+/* ================= 51 位正式官方角色資料庫 ================= */
 const CHARACTER_DATABASE = [
-  // === 22 位賦形者 ===
+  // === 23 位賦形者 ===
   {
     id: 'kulu', name: '克爾', element: '融元素', color: '#1a3b5c', border: '#ff3333',
     type: 'positive', roleType: '賦形者', reqLeader: 11, reqSupport: 15,
@@ -428,7 +428,7 @@ const CHARACTER_DATABASE = [
     type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
     desc: '【回歸・淨化盤面】將畫面中所有負面干擾珠與闇色珠瞬間「回歸」洗白，轉化為隊長同色珠。',
     bgUrl: 'images/roar_bg.webp', isLandscape: true,
-    cheers: ['「第一波守住了！大家狀態正好，保持這股勁頭往前推！」', '「第二階段突破！餐館的特製熱飲已經就緒了，最後一戰打得漂亮點！」'],
+    cheers: ['<div>第一波守住了！大家狀態正好，保持這股勁頭往前推！</div>', '<div>第二階段突破！餐館的特製熱飲已經就緒了，最後一戰打得漂亮點！</div>'],
     endingText: '<div>幹得漂亮！這場勝利屬於我們所有人！走吧，今晚回餐館慶功，我親自下廚招待大家！</div>'
   },
   {
@@ -502,6 +502,14 @@ const CHARACTER_DATABASE = [
     bgUrl: 'images/garoz_bg.webp', isLandscape: true,
     cheers: ['<div>預言的第一步已印證，我所選的路不必旁人置喙。</div>', '<div>第二階段擊破，朝向未知的終點前進。</div>'],
     endingText: '<div>《亞榭洛》上的墨跡已然成真。你今天的執著，我認同了。</div>'
+  },
+  {
+    id: 'altima', name: '阿爾提瑪', element: '闇元素', color: '#2b1055', border: '#a855f7',
+    type: 'positive', roleType: '賦形者', reqLeader: 13, reqSupport: 17,
+    desc: '【影脈吞噬】生成大型闇元素權能珠，點擊後瞬間淨化並消除盤面上所有的黑珠與綠珠。',
+    bgUrl: 'images/altima_bg.webp', isLandscape: true,
+    cheers: ['<div>闇影的刻印已完全甦醒。第一階段，完美掌握。</div>', '<div>第二階段跨越。在無盡的暗流中，我們的共鳴無人能擋。</div>'],
+    endingText: '<div>闇影終將回歸平靜。這場共鳴展現出了超越常理的深度，與你並肩作戰，是這趟旅程中最深刻的印記。</div>'
   },
 
   // === 負面妨礙賦形者池 ===
@@ -762,7 +770,7 @@ CHARACTER_DATABASE.forEach(c => {
   charImageCache[c.id + '_special'] = createHiResAvatarCache(c, true);
 });
 
-/* ================= 抽池與關卡配置同步修復 ================= */
+/* ================= 階段角色抽選邏輯 ================= */
 function shuffleArray(arr) {
   const result = [...arr];
   for (let i = result.length - 1; i > 0; i--) {
@@ -772,19 +780,54 @@ function shuffleArray(arr) {
   return result;
 }
 
-function setupMatchPool() {
+function setupMatchPool(stage) {
   currentMatchChars = [];
   currentTrackers = {};
+  
+  // 1. 隊長固定為第一個
   currentMatchChars.push(selectedLeader);
 
   const positivePool = shuffleArray(CHARACTER_DATABASE.filter(c => c.type === 'positive' && c.id !== selectedLeader.id));
   const negativePool = shuffleArray(CHARACTER_DATABASE.filter(c => c.type === 'negative' && c.id !== selectedLeader.id));
   const neutralPool  = shuffleArray(CHARACTER_DATABASE.filter(c => c.type === 'none' && c.id !== selectedLeader.id));
 
-  if (selectedLeader.type === 'negative') {
-    currentMatchChars.push(positivePool[0] || neutralPool[0], positivePool[1] || neutralPool[1], negativePool[0] || negativePool[2], neutralPool[3]);
+  if (stage === 1) {
+    // 第一關：隊長 + 1正向賦形者 + 2妨礙賦形者 + 1屬性或無能力者
+    const pos = positivePool[0];
+    const neg1 = negativePool[0];
+    const neg2 = negativePool[1] || negativePool[0];
+    const neu = neutralPool[0];
+    if (pos) currentMatchChars.push(pos);
+    if (neg1) currentMatchChars.push(neg1);
+    if (neg2) currentMatchChars.push(neg2);
+    if (neu) currentMatchChars.push(neu);
+  } else if (stage === 2) {
+    // 第二關：隊長 + 2妨礙賦形者 + 2屬性或無能力者
+    const neg1 = negativePool[0];
+    const neg2 = negativePool[1] || negativePool[0];
+    const neu1 = neutralPool[0];
+    const neu2 = neutralPool[1] || neutralPool[0];
+    if (neg1) currentMatchChars.push(neg1);
+    if (neg2) currentMatchChars.push(neg2);
+    if (neu1) currentMatchChars.push(neu1);
+    if (neu2) currentMatchChars.push(neu2);
   } else {
-    currentMatchChars.push(positivePool[0] || neutralPool[0], negativePool[0] || negativePool[1], negativePool[1] || negativePool[2], neutralPool[3]);
+    // 第三關：隊長 + 3妨礙賦形者 + 1屬性或無能力者
+    const neg1 = negativePool[0];
+    const neg2 = negativePool[1] || negativePool[0];
+    const neg3 = negativePool[2] || negativePool[0];
+    const neu = neutralPool[0];
+    if (neg1) currentMatchChars.push(neg1);
+    if (neg2) currentMatchChars.push(neg2);
+    if (neg3) currentMatchChars.push(neg3);
+    if (neu) currentMatchChars.push(neu);
+  }
+
+  // 確保陣列不足 5 位時以備用角色補足
+  while (currentMatchChars.length < 5) {
+    const fallback = CHARACTER_DATABASE.find(c => !currentMatchChars.includes(c));
+    if (fallback) currentMatchChars.push(fallback);
+    else break;
   }
 
   currentMatchChars.forEach(c => {
@@ -899,7 +942,7 @@ function refreshLeaderDetails() {
 
 document.getElementById('btn-confirm-leader').onclick = () => {
   document.getElementById('modal-select-leader').style.display = 'none';
-  setupMatchPool();
+  setupMatchPool(1);
   showMatchBrief();
 };
 
@@ -919,7 +962,7 @@ function showMatchBrief() {
       <img src="images/${c.id}.webp" onerror="this.src='images/background.webp'" style="width:32px; height:32px; border-radius:50%; object-fit:cover; border:1px solid ${c.border}; flex-shrink:0;">
       <div>
         <div style="font-weight:bold; font-size:11px; color:#fff;">
-          ${c.name} ${isLdr ? '<span style="color:#ff5722;">[同行隊長] (出現率 30%)</span>' : ''}
+          ${c.name} ${isLdr ? '<span style="color:#ff5722;">[同行隊長]</span>' : ''}
         </div>
         <div style="font-size:10px; color:#38bdf8; font-weight:bold;">${c.element} ｜ ${c.roleType || '能力者'}</div>
         <div style="font-size:10px; color:#ccc;">${c.effectDesc || c.desc}</div>
@@ -939,7 +982,7 @@ document.getElementById('btn-start-play').onclick = () => {
   document.getElementById('modal-match-brief').style.display = 'none';
   currentStage = 1;
   totalGameScore = 0;
-  startStage(currentStage, true);
+  startStage(currentStage, false);
 };
 
 document.getElementById('btn-cheer-back').onclick = () => {
@@ -985,7 +1028,7 @@ function startStage(stage, shouldReshuffle = true) {
   updateScore(0);
 
   if (shouldReshuffle) {
-    setupMatchPool();
+    setupMatchPool(stage);
   }
 
   gravityDebuffTimer = 0;
@@ -1014,7 +1057,7 @@ function startStage(stage, shouldReshuffle = true) {
     }
   }, 1000);
 
-  setDialogue(selectedLeader.name, `🎵 「第 ${stage} 階段展開。非隊長刻印已重新調配，跟緊我的步調！」`);
+  setDialogue(selectedLeader.name, `🎵 「第 ${stage} 階段展開。角色刻印已依新規則調配，跟緊我的步調！」`);
   gameStatus = 'PLAYING';
   
   spawnOpeningWave(MAX_BALLS);
@@ -1288,7 +1331,7 @@ function addFloatingScore(x, y, points, color = '#ffffff') {
 }
 
 function getPositiveSupportRole() {
-  const positives = currentMatchChars.filter(c => c.type === 'positive');
+  const positives = currentMatchChars.filter(c => c.type === 'positive' && c.id !== selectedLeader.id);
   if (positives.length > 0) return positives[Math.floor(Math.random() * positives.length)];
   return selectedLeader;
 }
@@ -1309,7 +1352,7 @@ function triggerCharSkillEffect(charId) {
       spawnSingleBall(VIRTUAL_WIDTH/2, 60, char, true);
       break;
 
-    case 'lanlan': // 嵐懶 (修正：如同賈瑞斯般洗版重置並降下 5 顆隊長/正向珠，且重力往左右兩側分開 5 秒)
+    case 'lanlan': // 嵐懶
       showBanner('【重生賦形】洗版重置，左右向重力分開 5 秒！');
       balls.forEach(b => World.remove(world, b));
       balls.length = 0;
@@ -1399,7 +1442,7 @@ function triggerCharSkillEffect(charId) {
       }, 5000);
       break;
 
-    case 'raku': // 埒（修正：重力往上反轉 2 秒，並消除 5 個妨礙珠）
+    case 'raku': // 埒
       engine.gravity.y = -BASE_GRAVITY;
       balls.filter(b => b.isBlackBall || b.isFrozenBall || b.isGreenBall).slice(0, 5).forEach(b => {
         World.remove(world, b);
@@ -1412,10 +1455,15 @@ function triggerCharSkillEffect(charId) {
       }, 2000);
       break;
 
-    case 'garoz': // 犺（修正：點擊後瞬間隨機消除盤面上 5 顆珠子）
+    case 'garoz': // 犺
       showBanner('【烈犺瞬擊】隨機消除盤面上 5 顆珠子！');
       const randomTargets = balls.filter(other => !other.isSpecialOrb).sort(() => Math.random() - 0.5).slice(0, 5);
       executeElimination(randomTargets);
+      break;
+
+    case 'altima': // 阿爾提瑪
+      showBanner('【影脈吞噬】生成大型闇元素權能珠！');
+      spawnSingleBall(VIRTUAL_WIDTH/2, 60, char, true);
       break;
 
     case 'kokumei': // 克明
@@ -1613,12 +1661,14 @@ function executeAttributePendingAction(ball) {
     setTimeout(() => { if (!isStoneShieldActive) engine.gravity.y = BASE_GRAVITY; }, 3000);
     showBanner('【重力屬性觸發】重力反轉 3 秒！');
   } else if (el.includes('闇')) {
-    for (let i = 0; i < 5; i++) {
-      const targets = balls.filter(b => !b.isSpecialOrb && !b.isBlackBall);
-      if (targets.length > 0) targets[Math.floor(Math.random() * targets.length)].isBlackBall = true;
-      else spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, true);
-    }
-    showBanner('【闇屬性觸發】生成 5 顆可消除黑珠！');
+    const targetDark = balls.filter(b => b.isBlackBall || b.isGreenBall || b.isFrozenBall);
+    targetDark.forEach(b => {
+      World.remove(world, b);
+      const i = balls.indexOf(b);
+      if (i !== -1) balls.splice(i, 1);
+    });
+    updateScore(targetDark.length * 120);
+    showBanner('【闇屬性觸發】影脈吞噬，淨化黑珠與綠珠！');
   }
 }
 
@@ -1710,12 +1760,15 @@ function handleStageClear() {
     gameStatus = 'STAGE_CLEARED';
     if (timerInterval) clearInterval(timerInterval);
     
-    startStage(currentStage + 1, true);
-
+    const nextTargetStage = currentStage + 1;
     const cheerModal = document.getElementById('modal-stage-cheer');
     document.getElementById('cheer-stage-title').innerText = `Stage ${currentStage} 突破達成！`;
     document.getElementById('cheer-speaker').innerText = selectedLeader.name;
-    document.getElementById('cheer-text').innerText = '「幹得漂亮，繼續朝下一階段推進！」';
+    document.getElementById('cheer-text').innerText = `「幹得漂亮，準備進入 Stage ${nextTargetStage}！角色配置已依新規則更新！」`;
+
+    // 預先為下一關建立抽選名單以供預覽
+    const backupChars = [...currentMatchChars];
+    setupMatchPool(nextTargetStage);
 
     const previewEl = document.getElementById('next-stage-preview');
     previewEl.innerHTML = '';
@@ -1734,14 +1787,16 @@ function handleStageClear() {
       previewEl.appendChild(row);
     });
     cheerModal.style.display = 'flex';
+
+    document.getElementById('btn-next-stage').onclick = () => {
+      cheerModal.style.display = 'none';
+      currentStage = nextTargetStage;
+      startStage(currentStage, false); // 配置已經在上方預先更新完成
+    };
   } else {
     gameWin();
   }
 }
-
-document.getElementById('btn-next-stage').onclick = () => {
-  document.getElementById('modal-stage-cheer').style.display = 'none';
-};
 
 /* ================= 移除紅線判定 ================= */
 function checkDangerOverflow() {
