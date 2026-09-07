@@ -5,30 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Eletsum - 無限元素共鳴消除</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
      
     body, html {
       width: 100%; height: 100%; height: 100dvh; overflow: hidden;
       background: #07080b; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      /* 啟用硬體加速與 WebGL 最佳化渲染 */
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
 
     #bg-layer {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden;
       background: #07080b;
+      will-change: transform, opacity;
     }
     .bg-image {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background-repeat: no-repeat; background-position: center top;
       background-size: cover;
-      transition: opacity 0.8s ease; opacity: 0;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0;
+      will-change: opacity;
     }
     .bg-image.active { opacity: 1; }
 
     #bg-dark-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-      background: rgba(0, 0, 0, 0.2); opacity: 0; pointer-events: none;
+      background: rgba(0, 0, 0, 0.35); opacity: 0; pointer-events: none;
       transition: opacity 0.5s ease;
+      backdrop-filter: blur(2px);
     }
     #bg-dark-overlay.active { opacity: 1; }
 
@@ -38,8 +45,8 @@
         animation: panBgPortrait 14s ease-in-out infinite alternate;
       }
       @keyframes panBgPortrait {
-        0% { transform: translateX(0%); }
-        100% { transform: translateX(-35%); }
+        0% { transform: translateX(0%) translateZ(0); }
+        100% { transform: translateX(-35%) translateZ(0); }
       }
     }
 
@@ -65,142 +72,198 @@
     #game-frame {
       position: relative; width: 100%; height: 100%; max-width: 440px;
       display: flex; flex-direction: column; overflow: hidden;
-      border-left: 1px solid rgba(255,255,255,0.06); border-right: 1px solid rgba(255,255,255,0.06);
+      border-left: 1px solid rgba(69,243,255,0.15); border-right: 1px solid rgba(69,243,255,0.15);
+      box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(69,243,255,0.05);
     }
 
     #top-hud {
       display: flex; justify-content: space-between; align-items: center;
-      padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px 12px;
-      background: rgba(11, 12, 16, 0.88); backdrop-filter: blur(10px);
-      color: #fff; font-size: 12px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: calc(env(safe-area-inset-top, 0px) + 10px) 14px 10px 14px;
+      background: rgba(11, 12, 16, 0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      color: #fff; font-size: 12px; font-weight: bold; border-bottom: 1px solid rgba(69,243,255,0.25);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
       z-index: 5;
     }
-    .hud-bar { width: 85px; height: 8px; background: #252836; border-radius: 4px; overflow: hidden; margin-top: 3px; }
-    .hud-progress { height: 100%; width: 0%; background: #45f3ff; transition: width 0.2s; }
-    .hud-stage { font-size: 11px; color: #ff9800; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; border: 1px solid #ff9800; }
-    .hud-timer { font-size: 15px; color: #ffeb3b; font-variant-numeric: tabular-nums; }
+    .hud-bar { width: 90px; height: 8px; background: rgba(37, 40, 54, 0.9); border-radius: 4px; overflow: hidden; margin-top: 4px; border: 1px solid rgba(69,243,255,0.2); }
+    .hud-progress { height: 100%; width: 0%; background: linear-gradient(90deg, #00e5ff, #45f3ff); box-shadow: 0 0 10px #45f3ff; transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .hud-stage { font-size: 11px; color: #ffb74d; background: rgba(255, 152, 0, 0.15); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(255, 152, 0, 0.6); box-shadow: 0 0 8px rgba(255,152,0,0.3); }
+    .hud-timer { font-size: 15px; color: #ffeb3b; font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(255,235,59,0.5); }
     .btn-icon {
-      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-      color: #fff; padding: 4px 8px; border-radius: 6px; font-size: 11px; cursor: pointer;
+      background: rgba(69, 243, 255, 0.1); border: 1px solid rgba(69, 243, 255, 0.3);
+      color: #45f3ff; padding: 5px 10px; border-radius: 8px; font-size: 11px; cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+    .btn-icon:hover { background: rgba(69, 243, 255, 0.25); box-shadow: 0 0 12px rgba(69,243,255,0.4); }
 
     #board-wrapper { position: relative; flex: 1; width: 100%; overflow: hidden; 
-    background: rgba(0, 0, 0, 0.4);
+      background: radial-gradient(circle at center, rgba(16, 22, 36, 0.65) 0%, rgba(7, 8, 11, 0.85) 100%);
     }
-    canvas { width: 100%; height: 100%; display: block; }
-    
+    canvas { width: 100%; height: 100%; display: block; mix-blend-mode: screen; }
+    #pixi-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3;
+    }
+     
     #top-action-bar {
       position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: flex-end; align-items: center; z-index: 5;
     }
     #btn-manual-drop {
       background: rgba(255, 152, 0, 0.25); border: 1.5px solid #ff9800; color: #ffb74d;
-      padding: 4px 10px; border-radius: 14px; font-size: 11px; font-weight: bold;
-      backdrop-filter: blur(4px); cursor: pointer; transition: transform 0.1s;
+      padding: 6px 14px; border-radius: 16px; font-size: 11px; font-weight: bold;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+      box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
     }
+    #btn-manual-drop:hover { box-shadow: 0 0 25px rgba(255, 152, 0, 0.6); transform: scale(1.05); }
     #btn-manual-drop:active { transform: scale(0.92); }
-    #btn-manual-drop:disabled { opacity: 0.4; border-color: #666; color: #888; cursor: not-allowed; }
+    #btn-manual-drop:disabled { opacity: 0.4; border-color: #666; color: #888; cursor: not-allowed; box-shadow: none; }
 
     #side-trackers {
-      position: absolute; right: 6px; top: 48px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 4;
+      position: absolute; right: 8px; top: 52px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 4;
     }
     .tracker-node {
-      display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.65);
-      padding: 2px 6px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; gap: 6px; background: rgba(11, 14, 20, 0.78);
+      padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(69,243,255,0.25);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
-    .tracker-dot { width: 16px; height: 16px; border-radius: 50%; }
-    .tracker-val { color: #fff; font-size: 10px; font-weight: bold; min-width: 26px; }
+    .tracker-dot { width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+    .tracker-val { color: #fff; font-size: 10px; font-weight: bold; min-width: 28px; }
     #active-effect-timer {
-      position: absolute; right: 6px; top: 220px; display: flex; flex-direction: column; gap: 4px; pointer-events: none; z-index: 4;
+      position: absolute; right: 8px; top: 230px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 4;
     }
     .effect-timer-node {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px; background: rgba(255, 87, 34, 0.85);
-      padding: 3px 8px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.3);
-      color: #fff; font-size: 10px; font-weight: bold; animation: pulseEffect 1s infinite alternate;
-      box-shadow: 0 0 10px rgba(255, 87, 34, 0.5);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(255, 87, 34, 0.88);
+      padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.4);
+      color: #fff; font-size: 10px; font-weight: bold; animation: pulseEffect 1s infinite alternate cubic-bezier(0.4, 0, 0.6, 1);
+      box-shadow: 0 0 15px rgba(255, 87, 34, 0.6), inset 0 0 5px rgba(255,255,255,0.5);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     }
     @keyframes pulseEffect {
-      from { opacity: 0.85; }
-      to { opacity: 1; transform: scale(1.02); }
+      from { opacity: 0.85; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.04); }
     }
     #bottom-dialogue-box {
-      min-height: 80px; padding: 10px 14px calc(env(safe-area-inset-bottom, 16px) + 10px) 14px;
-      background: rgba(11, 12, 16, 0.92); backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(255,255,255,0.15); display: flex; flex-direction: column; justify-content: center;
+      min-height: 85px; padding: 12px 16px calc(env(safe-area-inset-bottom, 16px) + 12px) 16px;
+      background: rgba(11, 12, 16, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(69,243,255,0.25); display: flex; flex-direction: column; justify-content: center;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.7);
       z-index: 5;
     }
-    .dialogue-speaker { font-size: 12px; color: #45f3ff; font-weight: bold; margin-bottom: 2px; }
-    .dialogue-text { font-size: 12px; color: #e0e0e0; line-height: 1.35; }
+    .dialogue-speaker { font-size: 12px; color: #45f3ff; font-weight: bold; margin-bottom: 3px; text-shadow: 0 0 8px rgba(69,243,255,0.5); }
+    .dialogue-text { font-size: 12px; color: #e2e8f0; line-height: 1.4; }
 
     .overlay-modal {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.88); backdrop-filter: blur(8px);
+      background: rgba(7, 8, 11, 0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
       display: flex; flex-direction: column; justify-content: center; align-items: center;
       padding: 20px; z-index: 20; color: #fff; text-align: center;
+      animation: modalFadeIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
     }
     #result-rank-badge {
       display: inline-block;
       padding: 4px 20px;
       border: 3px solid #ffd700;
       border-radius: 50%;
-      width: 80px;
-      height: 80px;
-      line-height: 72px;
-      background: rgba(255, 215, 0, 0.15);
+      width: 85px;
+      height: 85px;
+      line-height: 75px;
+      background: rgba(255, 215, 0, 0.18);
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
       animation: rankPulse 1.5s ease-in-out infinite alternate;
     }
     @keyframes rankPulse {
-      from { transform: scale(1); box-shadow: 0 0 10px rgba(255,215,0,0.4); }
-      to { transform: scale(1.08); box-shadow: 0 0 25px rgba(255,215,0,0.8); }
+      from { transform: scale(1); box-shadow: 0 0 15px rgba(255,215,0,0.4); }
+      to { transform: scale(1.08); box-shadow: 0 0 35px rgba(255,215,0,0.9); }
     }
     .modal-card {
-      background: #181d26; border: 1px solid #45f3ff; border-radius: 12px;
-      padding: 18px; width: 100%; max-width: 380px; max-height: 84vh; overflow-y: auto;
+      background: rgba(24, 29, 38, 0.95); border: 1px solid rgba(69, 243, 255, 0.4); border-radius: 16px;
+      padding: 22px; width: 100%; max-width: 380px; max-height: 84vh; overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 15px rgba(69,243,255,0.1);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
     .btn {
-      background: #45f3ff; color: #0b0c10; font-weight: bold; border: none;
-      padding: 10px 24px; border-radius: 20px; font-size: 14px; cursor: pointer;
-    }
-    .btn.danger { background: #ff1744; color: #fff; }
-    .btn.sub { background: #333; color: #ccc; }
-    .btn.gold { background: #ff9800; color: #fff; }
-    .btn:active { transform: scale(0.97); }
-    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+      background: linear-gradient(135deg, #00e5ff, #45f3ff); color: #0b0c10; font-weight: bold; border: none;
+      padding: 12px 26px; border-radius: 24px; font-size: 14px; cursor: pointer;
+      box-shadow: 0 0 20px rgba(69, 243, 255, 0.3);
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      animation: btnBreathing 2.5s ease-in-out infinite alternate;
+}
 
-    #title-screen { z-index: 30; background: rgba(11, 12, 16, 0.6); backdrop-filter: blur(1px); }
-    .title-logo { font-size: 42px; font-weight: 900; letter-spacing: 6px; color: #45f3ff; text-shadow: 0 0 20px rgba(69,243,255,0.6); margin-bottom: 6px; }
-    .title-sub { font-size: 13px; color: #ff8a65; letter-spacing: 2px; margin-bottom: 24px; }
+/* 在下方新增這段關鍵影格 */
+@keyframes btnBreathing {
+  0% {
+    box-shadow: 0 0 10px rgba(69, 243, 255, 0.2);
+  }
+  100% {
+    box-shadow: 0 0 22px rgba(69, 243, 255, 0.5);
+  }
+    }
+    .btn:hover { box-shadow: 0 0 30px rgba(69, 243, 255, 0.5); transform: translateY(-2px); }
+    .btn.danger { background: linear-gradient(135deg, #ff1744, #ff5252); color: #fff; box-shadow: 0 0 20px rgba(255, 23, 68, 0.4); }
+    .btn.danger:hover { box-shadow: 0 0 30px rgba(255, 23, 68, 0.7); }
+    .btn.sub { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: none; }
+    .btn.sub:hover { background: rgba(255, 255, 255, 0.15); color: #fff; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
+    .btn.gold { background: linear-gradient(135deg, #ffb300, #ff9800); color: #fff; box-shadow: 0 0 20px rgba(255, 152, 0, 0.5); }
+    .btn.gold:hover { box-shadow: 0 0 30px rgba(255, 152, 0, 0.8); }
+    .btn:active { transform: scale(0.96); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+
+    #title-screen { z-index: 30; background: rgba(11, 12, 16, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+    .title-logo { font-size: 42px; font-weight: 900; letter-spacing: 6px; color: #45f3ff; text-shadow: 0 0 25px rgba(69,243,255,0.4), 0 0 50px rgba(69,243,255,0.2); margin-bottom: 6px; 
+    animation: titleBreathing 3s ease-in-out infinite alternate;
+}
+
+/* 在下方（或適當位置）新增這段關鍵影格 */
+@keyframes titleBreathing {
+  0% {
+    transform: scale(1);
+    text-shadow: 0 0 10px rgba(69,243,255,0.3);
+  }
+  100% {
+    transform: scale(1.03);
+    text-shadow: 0 0 25px rgba(69,243,255,0.7);
+  }
+    }
+    .title-sub { font-size: 13px; color: #ff8a65; letter-spacing: 3px; margin-bottom: 24px; text-shadow: 0 0 10px rgba(255,138,101,0.5); }
 
     .title-btn-group {
       display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 200px;
     }
     #btn-open-gallery {
-      background: #1e293b;
+      background: rgba(30, 41, 59, 0.8);
       color: #38bdf8;
       border: 1px solid rgba(56, 189, 248, 0.4);
     }
     .leader-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; max-height: 240px; overflow-y: auto; }
-    .leader-item { background: #0b0c10; padding: 6px 4px; border-radius: 8px; border: 1px solid #333; cursor: pointer; text-align: center; }
-    .leader-item.selected { border-color: #ff5722; background: #261919; }
-    .leader-avatar-thumb { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; margin-bottom: 3px; border: 1px solid #555; }
+    .leader-item { background: rgba(11, 12, 16, 0.8); padding: 6px 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; text-align: center; transition: all 0.2s; }
+    .leader-item:hover { border-color: rgba(69,243,255,0.5); transform: translateY(-2px); }
+    .leader-item.selected { border-color: #ff5722; background: rgba(38, 25, 25, 0.9); box-shadow: 0 0 15px rgba(255,87,34,0.4); }
+    .leader-avatar-thumb { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 3px; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
     .leader-item div:nth-child(2) { 
       font-weight: bold; 
-      font-size: 13px; 
+      font-size: 12px; 
       color: #f1f5f9; 
     }
 
-    .clear-badge { font-size: 10px; color: #ffeb3b; display: block; margin-top: 2px; }
+    .clear-badge { font-size: 10px; color: #ffeb3b; display: block; margin-top: 2px; text-shadow: 0 0 5px rgba(255,235,59,0.5); }
 
     .variant-selector { margin: 10px 0; display: flex; gap: 6px; justify-content: center; }
     .variant-btn {
-      font-size: 10px; padding: 4px 8px; border-radius: 12px; background: #121820; border: 1px solid #555; color: #bbb; cursor: pointer;
+      font-size: 10px; padding: 5px 10px; border-radius: 14px; background: rgba(18, 24, 32, 0.9); border: 1px solid rgba(255,255,255,0.2); color: #bbb; cursor: pointer;
+      transition: all 0.2s;
     }
-    .variant-btn.active { border-color: #ff5722; color: #fff; background: #331a1a; font-weight: bold; }
+    .variant-btn.active { border-color: #ff5722; color: #fff; background: rgba(51, 26, 26, 0.95); font-weight: bold; box-shadow: 0 0 10px rgba(255,87,34,0.4); }
 
     #banner-notify {
       position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
       background: linear-gradient(90deg, transparent, rgba(255, 87, 34, 0.95), transparent);
-      color: #fff; width: 100%; padding: 12px 0; text-align: center; font-size: 17px; font-weight: bold;
-      letter-spacing: 2px; pointer-events: none; opacity: 0; transition: all 0.3s; z-index: 10;
+      color: #fff; width: 100%; padding: 14px 0; text-align: center; font-size: 17px; font-weight: bold;
+      letter-spacing: 2px; pointer-events: none; opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
+      text-shadow: 0 0 15px rgba(255,87,34,0.8);
     }
 
     #ending-stage-screen {
@@ -221,16 +284,17 @@
       padding: 16px 16px calc(env(safe-area-inset-bottom, 20px) + 16px) 16px;
     }
     #ending-dialogue-box {
-      background: rgba(11, 14, 20, 0.95); border: 1.5px solid rgba(69, 243, 255, 0.6);
-      border-radius: 16px; padding: 22px 28px; backdrop-filter: blur(14px);
-      box-shadow: 0 0 35px rgba(0,0,0,0.9); max-width: 820px; margin: 0 auto; 
+      background: rgba(11, 14, 20, 0.94); border: 1.5px solid rgba(69, 243, 255, 0.6);
+      border-radius: 18px; padding: 22px 28px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 0 45px rgba(0,0,0,0.9), inset 0 0 20px rgba(69,243,255,0.15); max-width: 820px; margin: 0 auto; 
       cursor: pointer;
     }
-    #ending-speaker { font-size: 18px; font-weight: bold; color: #45f3ff; margin-bottom: 8px; } 
+    #ending-speaker { font-size: 18px; font-weight: bold; color: #45f3ff; margin-bottom: 8px; text-shadow: 0 0 10px rgba(69,243,255,0.6); } 
     #ending-text-body { font-size: 17px; color: #eee; line-height: 1.8; min-height: 70px; } 
     .typing-cursor {
-      display: inline-block; width: 2px; height: 14px; background: #ff9800;
-      margin-left: 3px; vertical-align: middle; animation: blink 0.7s infinite;
+      display: inline-block; width: 2px; height: 16px; background: #ff9800;
+      margin-left: 4px; vertical-align: middle; animation: blink 0.7s infinite;
+      box-shadow: 0 0 8px #ff9800;
     }
     @keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
 
@@ -239,10 +303,11 @@
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0; max-height: 320px; overflow-y: auto;
     }
     .gallery-card {
-      background: #10141d; border: 1px solid #333; border-radius: 8px; padding: 10px;
-      display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: border-color 0.2s;
+      background: rgba(16, 20, 29, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 10px;
+      display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.2s;
     }
-    .gallery-card.unlocked { border-color: #ff9800; }
+    .gallery-card:hover { border-color: rgba(69,243,255,0.5); transform: translateY(-2px); }
+    .gallery-card.unlocked { border-color: #ff9800; box-shadow: 0 0 15px rgba(255,152,0,0.3); }
     .gallery-card.locked { opacity: 0.4; cursor: not-allowed; }
 
     .music-player-container {
@@ -259,33 +324,36 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: rgba(30, 41, 59, 0.75);
-      border: 1px solid rgba(56, 189, 248, 0.5);
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.6);
       color: #38bdf8;
       font-size: 1.1rem;
       display: flex;
       justify-content: center;
       align-items: center;
       cursor: pointer;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-      transition: all 0.25s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(56,189,248,0.3);
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       padding: 0 !important;
     }
     .music-btn:hover {
-      background: rgba(56, 189, 248, 0.2);
-      transform: scale(1.05);
+      background: rgba(56, 189, 248, 0.25);
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 20px rgba(56,189,248,0.6);
     }
     .music-info-panel {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.4);
       border-radius: 20px;
-      padding: 4px 12px;
+      padding: 6px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
-      backdrop-filter: blur(8px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      gap: 10px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
     .music-title-text {
       font-size: 0.75rem;
@@ -297,7 +365,7 @@
     }
     .music-controls {
       display: flex;
-      gap: 4px;
+      gap: 6px;
     }
     .music-sub-btn {
       background: none;
@@ -311,6 +379,7 @@
     }
     .music-sub-btn:hover {
       opacity: 1;
+      text-shadow: 0 0 8px #38bdf8;
     }
     body.playing-active .music-player-container,
     #ending-stage-screen[style*="flex"] ~ .music-player-container, 
@@ -378,6 +447,7 @@
       <div id="side-trackers"></div>
       <div id="active-effect-timer"></div>
       <div id="banner-notify">權能發動</div>
+      <div id="pixi-container"></div>
       <canvas id="gameCanvas"></canvas>
     </div>
 
@@ -398,7 +468,7 @@
           <div class="variant-selector" id="variant-selector"></div>
         </div>
 
-        <div id="leader-desc" style="font-size: 11px; color: #ddd; min-height: 44px; text-align: left; background: #121820; padding: 6px; border-radius: 6px; margin-top: 6px;"></div>
+        <div id="leader-desc" style="font-size: 11px; color: #ddd; min-height: 44px; text-align: left; background: rgba(18, 24, 32, 0.8); padding: 8px; border-radius: 8px; margin-top: 6px; border: 1px solid rgba(255,255,255,0.1);"></div>
         <div style="display: flex; gap: 8px; margin-top: 14px;">
           <button class="btn" id="btn-confirm-leader" style="flex: 1; margin-top: 0;">同行出發</button>
           <button class="btn sub" id="btn-leader-back" style="flex: 1;">返回首頁</button>
@@ -428,7 +498,7 @@
           <div id="cheer-text" style="font-size: 12px; color: #eee; line-height: 1.4; background: rgba(0,0,0,0.4); padding: 8px; border-radius: 8px; border-left: 3px solid #ff5722;"></div>
         </div>
         <div style="font-size: 11px; color: #ffeb3b; margin: 6px 0 4px 0; font-weight: bold;">【Stage 2 角色配置】</div>
-        <div id="next-stage-preview" style="display: flex; flex-direction: column; gap: 6px; text-align: left; background: #121820; padding: 6px; border-radius: 6px; max-height: 180px; overflow-y: auto;"></div>
+        <div id="next-stage-preview" style="display: flex; flex-direction: column; gap: 6px; text-align: left; background: rgba(18, 24, 32, 0.8); padding: 8px; border-radius: 8px; max-height: 180px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.1);"></div>
         <div style="display: flex; gap: 8px; margin-top: 14px;">
           <button class="btn" id="btn-next-stage" style="flex: 1; margin-top: 0;" disabled>繼續推進 (5s)</button>
           <button class="btn sub" id="btn-cheer-back" style="flex: 1;" disabled>返回首頁 (5s)</button>
@@ -618,6 +688,9 @@ function resetToTitleScreen() {
   chainLasers.length = 0;
   floatingScores.length = 0;
   fusionBeams = null;
+  if (pixiApp && pixiParticlesContainer) {
+    pixiParticlesContainer.removeChildren();
+  }
 
   document.getElementById('title-screen').style.display = 'flex';
 }
@@ -1055,33 +1128,116 @@ let isCastingSkill = false;
 
 let manualDropRemaining = 5;
 
-/* ================= 動態音效合成器 ================= */
-let audioCtx = null;
+/* ================= 動態音效合成器 (調整為更低沉的頻率) ================= */
+let audioCtx = function() {
+  return null;
+}();
 
 function playSynthPopSFX() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  try {
+    if (!window.audioCtx) {
+      window.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (window.audioCtx.state === 'suspended') {
+      window.audioCtx.resume();
+    }
+
+    const osc = window.audioCtx.createOscillator();
+    const gainNode = window.audioCtx.createGain();
+
+    // 將起始與結束頻率向下調低，使音效聽起來更低沉渾厚
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(200, window.audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(80, window.audioCtx.currentTime + 0.03);
+
+    gainNode.gain.setValueAtTime(0.3, window.audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, window.audioCtx.currentTime + 0.2);
+
+    osc.connect(gainNode);
+    gainNode.connect(window.audioCtx.destination);
+
+    osc.start();
+    osc.stop(window.audioCtx.currentTime + 0.22);
+  } catch (e) {
+    // Ignore audio context autoplay restrictions before user gesture
   }
-  if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
-  }
-
-  const osc = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-
-  osc.type = 'Sawtooth';
-  osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.03);
-
-  gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-  gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
-
-  osc.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.08);
 }
+
+/* ================= Pixi.js / WebGL 高效能特效與粒子系統 ================= */
+let pixiApp = null;
+let pixiParticlesContainer = null;
+const activePixiParticles = [];
+
+async function initPixiEngine() {
+  if (pixiApp) return;
+  const containerEl = document.getElementById('pixi-container');
+  if (!containerEl) return;
+
+  try {
+    pixiApp = new PIXI.Application();
+    await pixiApp.init({
+      backgroundAlpha: 0,
+      resizeTo: containerEl,
+      antialias: true,
+      powerPreference: 'high-performance'
+    });
+    containerEl.appendChild(pixiApp.canvas);
+
+    pixiParticlesContainer = new PIXI.Container();
+    pixiApp.stage.addChild(pixiParticlesContainer);
+
+    pixiApp.ticker.add((ticker) => {
+      const dt = ticker.deltaTime;
+      for (let i = activePixiParticles.length - 1; i >= 0; i--) {
+        const p = activePixiParticles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 0.1 * dt; // gravity
+        p.life -= 0.03 * dt;
+        p.alpha = Math.max(0, p.life);
+        p.scale.set(p.baseScale * p.life);
+
+        if (p.life <= 0) {
+          pixiParticlesContainer.removeChild(p);
+          activePixiParticles.splice(i, 1);
+        }
+      }
+    });
+  } catch (err) {
+    console.log("Pixi.js init warning:", err);
+  }
+}
+
+function spawnPixiExplosion(x, y, colorHex = 0x45f3ff, count = 24) {
+  if (!pixiApp || !pixiParticlesContainer) return;
+
+  const hexInt = typeof colorHex === 'string' ? parseInt(colorHex.replace('#', '0x')) : colorHex;
+
+  for (let i = 0; i < count; i++) {
+    const gfx = new PIXI.Graphics();
+    gfx.beginFill(hexInt, 0.9);
+    gfx.drawCircle(0, 0, Math.random() * 5 + 3);
+    gfx.endFill();
+
+    gfx.x = x;
+    gfx.y = y;
+
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.random() * 6 + 2;
+    gfx.vx = Math.cos(angle) * speed;
+    gfx.vy = Math.sin(angle) * speed;
+    gfx.life = 1.0;
+    gfx.baseScale = Math.random() * 0.8 + 0.6;
+    gfx.blendMode = PIXI.BLEND_MODES.ADD;
+
+    pixiParticlesContainer.addChild(gfx);
+    activePixiParticles.push(gfx);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  initPixiEngine();
+});
 
 /* ================= 跨裝置固定虛擬解析度 ================= */
 const VIRTUAL_WIDTH = 400;
@@ -1678,6 +1834,7 @@ function removeRandomObstacles(count = 5) {
   const picked = obstacles.sort(() => Math.random() - 0.5).slice(0, count);
   picked.forEach(b => {
     createVFX(b.position.x, b.position.y, '#45f3ff', 10);
+    playSynthPopSFX(); // 確保被清除的障礙珠也有音效
     World.remove(world, b);
     const idx = balls.indexOf(b);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1719,10 +1876,14 @@ function handleTap(pos) {
     return;
   }
 
-  if (clickedBall.isBlackBall || clickedBall.isLeadBall) return;
+  if (clickedBall.isBlackBall || clickedBall.isLeadBall) {
+    playSynthPopSFX(); // 點擊黑球/鉛球時也給予低沉反饋音效
+    return;
+  }
 
   if (clickedBall.isFrozenBall) {
     clickedBall.isFrozenBall = false;
+    playSynthPopSFX(); // 解凍冰珠時加入音效
     triggerSpark(clickedBall.position.x, clickedBall.position.y, '#00bcd4');
     addFloatingScore(clickedBall.position.x, clickedBall.position.y, 0, '#00bcd4');
     return;
@@ -1781,6 +1942,7 @@ function executeSingleSkill(orb) {
   if (isCastingSkill || gameStatus !== 'PLAYING') return;
   isCastingSkill = true;
   const char = orb.charData;
+  playSynthPopSFX(); // 點擊特殊權能珠/大顆屬性珠時觸發音效
 
   if (isSkillSealActive) {
     showBanner('【奪取】權能珠效果被吞噬無效化！');
@@ -1794,6 +1956,7 @@ function executeSingleSkill(orb) {
 
   if (char.roleType === '無能力者') {
     createVFX(orb.position.x, orb.position.y, '#ffb74d', 24);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0xffb74d, 35);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1809,6 +1972,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'lanlan') {
     createVFX(orb.position.x, orb.position.y, '#ff9800', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0xff9800, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1835,6 +1999,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'arc') {
     createVFX(orb.position.x, orb.position.y, '#ffb300', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0xffb300, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1853,7 +2018,7 @@ function executeSingleSkill(orb) {
       }
     });
     const randomTargets = balls.filter(other => !other.isSpecialOrb).sort(() => Math.random() - 0.5).slice(0, 8);
-    playSynthPopSFX(); // 確保技能引發消除時有音效
+    playSynthPopSFX();
     executeElimination(randomTargets);
     isCastingSkill = false;
     return;
@@ -1861,6 +2026,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'roar') {
     createVFX(orb.position.x, orb.position.y, '#29b6f6', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0x29b6f6, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1869,7 +2035,7 @@ function executeSingleSkill(orb) {
     balls.forEach(b => {
       if (b.isBlackBall || b.isFrozenBall || b.isGreenBall || b.isChainLocked || b.isLeadBall || b.isBomb) {
         createVFX(b.position.x, b.position.y, '#29b6f6', 8);
-        playSynthPopSFX(); // 障礙物被回歸清除時的音效
+        playSynthPopSFX();
         World.remove(world, b);
       }
     });
@@ -1887,6 +2053,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'zarion') {
     createVFX(orb.position.x, orb.position.y, '#ffa726', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0xffa726, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1900,6 +2067,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'jareth') {
     createVFX(orb.position.x, orb.position.y, '#ff6f00', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0xff6f00, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1920,6 +2088,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'takawa') {
     createVFX(orb.position.x, orb.position.y, '#42a5f5', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0x42a5f5, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1933,6 +2102,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'koushou') {
     createVFX(orb.position.x, orb.position.y, '#f06292', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0xf06292, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -1960,6 +2130,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'igarashi') {
     createVFX(orb.position.x, orb.position.y, '#26c6da', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0x26c6da, 40);
     const originPos = { x: orb.position.x, y: orb.position.y };
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
@@ -1998,13 +2169,13 @@ function executeSingleSkill(orb) {
     chainTargets.forEach((targetBall, index) => {
       setTimeout(() => {
         if (!balls.includes(targetBall)) return;
-        playSynthPopSFX(); // 確保五十嵐連鎖引爆每顆球時有音效
+        playSynthPopSFX();
         hitStopUntil = performance.now() + 35;
         const pts = 150 + index * 40;
         addFloatingScore(targetBall.position.x, targetBall.position.y, pts, '#26c6da');
         updateScore(pts);
         createVFX(targetBall.position.x, targetBall.position.y, '#80deea', 12);
-         
+        
         balls.forEach(other => {
           if (other !== targetBall) {
             const dist = Math.hypot(other.position.x - targetBall.position.x, other.position.y - targetBall.position.y);
@@ -2032,6 +2203,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'wakima') {
     createVFX(orb.position.x, orb.position.y, '#80deea', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0x80deea, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -2049,6 +2221,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'area') {
     createVFX(orb.position.x, orb.position.y, '#eceff1', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0xeceff1, 40);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -2068,6 +2241,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'raku') {
     createVFX(orb.position.x, orb.position.y, '#00e5ff', 40);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0x00e5ff, 45);
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
@@ -2093,6 +2267,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'garoz') {
     createVFX(orb.position.x, orb.position.y, '#ff1744', 30);
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0xff1744, 40);
     const originPos = { x: orb.position.x, y: orb.position.y };
     World.remove(world, orb);
     const idx = balls.indexOf(orb);
@@ -2113,13 +2288,13 @@ function executeSingleSkill(orb) {
     chainTargets.forEach((targetBall, index) => {
       setTimeout(() => {
         if (!balls.includes(targetBall)) return;
-        playSynthPopSFX(); // 確保犺連鎖引爆每顆球時有音效
+        playSynthPopSFX();
         hitStopUntil = performance.now() + 40;
         const pts = 150 + index * 40;
         addFloatingScore(targetBall.position.x, targetBall.position.y, pts, '#ff5252');
         updateScore(pts);
         createVFX(targetBall.position.x, targetBall.position.y, '#ff4081', 12);
-         
+        
         balls.forEach(other => {
           if (other !== targetBall) {
             const dist = Math.hypot(other.position.x - targetBall.position.x, other.position.y - targetBall.position.y);
@@ -2146,6 +2321,7 @@ function executeSingleSkill(orb) {
   }
 
   if (char.id === 'kulu') {
+    spawnPixiExplosion(orb.position.x, orb.position.y, 0x1a3b5c, 45);
     showBanner('【理解】全面連結意識流，並隨機消除 3 個妨礙珠！');
     removeRandomObstacles(3);
     const targets = findClusterAroundExcludingSpecial(orb, FUSION_MAX_SELECT);
@@ -2155,7 +2331,7 @@ function executeSingleSkill(orb) {
       World.remove(world, orb);
       const idx = balls.indexOf(orb);
       if (idx !== -1) balls.splice(idx, 1);
-      playSynthPopSFX(); // 確保克爾引爆時有音效
+      playSynthPopSFX();
       executeElimination(targets);
       isCastingSkill = false;
     }, 380);
@@ -2163,11 +2339,12 @@ function executeSingleSkill(orb) {
   }
 
   createVFX(orb.position.x, orb.position.y, '#ffffff', 32);
+  spawnPixiExplosion(orb.position.x, orb.position.y, 0xffffff, 35);
   World.remove(world, orb);
   const idx = balls.indexOf(orb);
   if (idx !== -1) balls.splice(idx, 1);
   const targets = findClusterAroundExcludingSpecial(orb, 12);
-  playSynthPopSFX(); // 一般權能珠觸發消除時的音效
+  playSynthPopSFX();
   executeElimination(targets);
   isCastingSkill = false;
 }
@@ -2253,7 +2430,7 @@ function triggerCharSkillEffect(charId) {
     case 'volt':
       showBanner('【寂滅】落下 3 顆 12 秒過熱自爆珠，中心生黑洞！');
       for (let i = 0; i < 3; i++) {
-        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, false, true);
+        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, true);
       }
       blackHolePos = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT / 2 };
       blackHoleTimer = 4.0;
@@ -2355,6 +2532,7 @@ function triggerAttributeAsPending(char) {
 function executeAttributePendingAction(ball) {
   const el = ball.charData.element;
   const charId = ball.charData.id;
+  playSynthPopSFX(); // 點擊放大後的屬性待命珠時觸發低沉音效
   World.remove(world, ball);
   const idx = balls.indexOf(ball);
   if (idx !== -1) balls.splice(idx, 1);
@@ -2394,7 +2572,7 @@ function executeAttributePendingAction(ball) {
     updateScore(200);
     showBanner('【闇元素】將 10 顆珠子變為盲珠，並消除 5 顆妨礙珠！');
   } else if (el.includes('火')) {
-    playSynthPopSFX(); // 確保火元素消除時有音效
+    playSynthPopSFX();
     const normals = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending).sort(() => Math.random() - 0.5).slice(0, 3);
     normals.forEach(b => {
       World.remove(world, b);
@@ -2438,7 +2616,7 @@ function applyAttributeEffect(char) {
 }
 
 function executeElimination(chain) {
-  playSynthPopSFX(); // 確保一般消除/爆炸珠/連鎖觸發消除時同步發出音效
+  playSynthPopSFX();
   const count = chain.length;
   let gained = 0;
   const multiplier = 1 + (count - 3) * 0.35;
@@ -2454,6 +2632,7 @@ function executeElimination(chain) {
   chain.forEach(b => { avgX += b.position.x; avgY += b.position.y; });
   avgX /= count; avgY /= count;
   createShockwave(avgX, avgY, chain[0].charData.border);
+  spawnPixiExplosion(avgX, avgY, chain[0].charData.border, count >= 5 ? 35 : 20);
 
   chain.forEach(b => {
     if (b.isSpecialOrb && b.charData.id === 'arc') {
@@ -2461,7 +2640,7 @@ function executeElimination(chain) {
       const idx = balls.indexOf(b);
       if (idx !== -1) balls.splice(idx, 1);
       const randomTargets = balls.filter(other => !other.isSpecialOrb).sort(() => Math.random() - 0.5).slice(0, 5);
-      playSynthPopSFX(); // 亞爾克連鎖引爆消除時的音效
+      playSynthPopSFX();
       executeElimination(randomTargets);
       showBanner('【震動】隨機消除 5 顆珠子！');
       return;
@@ -2473,6 +2652,7 @@ function executeElimination(chain) {
       b.chainLockCount--;
       if (b.chainLockCount > 0) {
         createVFX(b.position.x, b.position.y, '#e0e0e0', 8);
+        playSynthPopSFX(); // 破壞鎖鏈時加入音效
         addFloatingScore(b.position.x, b.position.y, 50, '#e0e0e0');
         updateScore(50);
         return;
@@ -2482,6 +2662,7 @@ function executeElimination(chain) {
 
     if (b.isFrozenBall) {
       b.isFrozenBall = false;
+      playSynthPopSFX(); // 破冰時加入音效
       addFloatingScore(b.position.x, b.position.y, 0, '#00bcd4');
       return;
     }
@@ -2823,13 +3004,13 @@ function triggerSpark(x, y, color) {
 }
 
 function createShockwave(x, y, color) {
-  shockwaves.push({ x, y, r: 8, maxR: 55, color, alpha: 0.85 });
+  shockwaves.push({ x, y, r: 8, maxR: 65, color, alpha: 0.9 });
 }
 
 function createVFX(x, y, color, count = 14) {
   for (let i = 0; i < count; i++) {
     const ang = Math.random() * Math.PI * 2;
-    const spd = Math.random() * 4.2 + 2.0;
+    const spd = Math.random() * 4.5 + 2.0;
     particles.push({ x, y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, life: 1.0, color, size: Math.random() * 3.5 + 3.0 });
   }
 }
@@ -2851,7 +3032,7 @@ function processBannerQueue() {
   
   banner.innerHTML = text;
   banner.style.opacity = '1';
-  banner.style.transform = 'translate(-50%, -50%) scale(0.8)';
+  banner.style.transform = 'translate(-50%, -50%) scale(1)';
 
   setTimeout(() => {
     banner.style.opacity = '0';
@@ -2878,10 +3059,10 @@ const FIXED_STEP = (1000 / 60) * 0.84;
 function drawBoardFrame() {
   if (isBorderOmitted) return;
   ctx.save();
-  ctx.strokeStyle = isStoneShieldActive ? '#00e676' : 'rgba(69, 243, 255, 0.35)';
+  ctx.strokeStyle = isStoneShieldActive ? '#00e676' : 'rgba(69, 243, 255, 0.45)';
   ctx.lineWidth = isStoneShieldActive ? 4.5 : 2.5;
-  ctx.shadowColor = isStoneShieldActive ? '#00e676' : 'rgba(69, 243, 255, 0.5)';
-  ctx.shadowBlur = 8;
+  ctx.shadowColor = isStoneShieldActive ? '#00e676' : 'rgba(69, 243, 255, 0.7)';
+  ctx.shadowBlur = 12;
   
   const r = 12;
   ctx.beginPath();
@@ -2902,7 +3083,6 @@ function mainRender(now) {
   const dt = Math.min(now - lastFrameTime, 80);
   lastFrameTime = now;
 
-  // 即時倒數狀態更新與 UI 渲染
   const effectTimerContainer = document.getElementById('active-effect-timer');
   if (effectTimerContainer && gameStatus === 'PLAYING') {
     let activeEffectsHtml = '';
@@ -2972,9 +3152,9 @@ function mainRender(now) {
           ctx.beginPath();
           ctx.arc(b.position.x - b.velocity.x * 1.5, b.position.y - b.velocity.y * 1.5, b.radius * 0.8, 0, Math.PI * 2);
           ctx.fillStyle = b.charData.border || '#00e5ff';
-          ctx.globalAlpha = 0.25;
+          ctx.globalAlpha = 0.35;
           ctx.shadowColor = '#00e5ff';
-          ctx.shadowBlur = 12;
+          ctx.shadowBlur = 15;
           ctx.fill();
           ctx.restore();
         }
@@ -3027,6 +3207,7 @@ function mainRender(now) {
         if (b.bombTimer <= 0) {
           playSynthPopSFX();
           createVFX(b.position.x, b.position.y, '#ff1744', 22);
+          spawnPixiExplosion(b.position.x, b.position.y, 0xff1744, 30);
           updateScore(-1500);
           showBanner('【超載過熱珠引爆】一顆扣除 1500 分！');
           b.isBomb = false;
@@ -3065,6 +3246,7 @@ function mainRender(now) {
           });
         });
         createVFX(blackHolePos.x, blackHolePos.y, '#9c27b0', 28);
+        spawnPixiExplosion(blackHolePos.x, blackHolePos.y, 0x9c27b0, 40);
       }
     }
 
@@ -3124,8 +3306,8 @@ function mainRender(now) {
   let shakeY = 0;
   if (screenShakeTimer > 0) {
     screenShakeTimer -= dt / 1000;
-    shakeX = (Math.random() - 0.5) * 16;
-    shakeY = (Math.random() - 0.5) * 16;
+    shakeX = (Math.random() - 0.5) * 20;
+    shakeY = (Math.random() - 0.5) * 20;
   }
 
   ctx.save();
@@ -3135,12 +3317,12 @@ function mainRender(now) {
 
   const pct = currentScore / stageTargetScore;
   const isHighTension = pct >= 0.8 || performance.now() < waterBonusEndTime;
-  const glowAlpha = 0.25 + Math.sin(now * 0.006) * 0.15;
+  const glowAlpha = 0.3 + Math.sin(now * 0.006) * 0.2;
   ctx.save();
-  ctx.strokeStyle = isHighTension ? `rgba(255, 152, 0, ${glowAlpha + 0.3})` : `rgba(69, 243, 255, ${glowAlpha})`;
-  ctx.lineWidth = isHighTension ? 8 : 4;
+  ctx.strokeStyle = isHighTension ? `rgba(255, 152, 0, ${glowAlpha + 0.35})` : `rgba(69, 243, 255, ${glowAlpha + 0.15})`;
+  ctx.lineWidth = isHighTension ? 9 : 5;
   ctx.shadowColor = isHighTension ? '#ff9800' : '#45f3ff';
-  ctx.shadowBlur = isHighTension ? 18 : 8;
+  ctx.shadowBlur = isHighTension ? 24 : 12;
   ctx.strokeRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
   ctx.restore();
 
@@ -3151,11 +3333,11 @@ function mainRender(now) {
       ctx.save();
       ctx.translate(rb.body.position.x, rb.body.position.y);
       ctx.rotate(rb.body.angle);
-      ctx.fillStyle = 'rgba(0, 229, 255, 0.45)';
+      ctx.fillStyle = 'rgba(0, 229, 255, 0.55)';
       ctx.strokeStyle = '#00e5ff';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 3.5;
       ctx.shadowColor = '#00e5ff';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 14;
       ctx.fillRect(-96, -8, 192, 16);
       ctx.strokeRect(-96, -8, 192, 16);
       ctx.restore();
@@ -3165,12 +3347,12 @@ function mainRender(now) {
   if (blackHoleTimer > 0) {
     ctx.save();
     ctx.beginPath();
-    ctx.arc(blackHolePos.x, blackHolePos.y, 40 + Math.sin(now * 0.015) * 10, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(74, 20, 140, 0.55)';
+    ctx.arc(blackHolePos.x, blackHolePos.y, 45 + Math.sin(now * 0.015) * 12, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(74, 20, 140, 0.65)';
     ctx.shadowColor = '#ba68c8';
-    ctx.shadowBlur = 24;
+    ctx.shadowBlur = 30;
     ctx.fill();
-    ctx.lineWidth = 3.5;
+    ctx.lineWidth = 4;
     ctx.strokeStyle = '#e1bee7';
     ctx.stroke();
     ctx.restore();
@@ -3190,11 +3372,11 @@ function mainRender(now) {
       else ctx.lineTo(pt.x, pt.y);
     });
     ctx.strokeStyle = laser.color;
-    ctx.lineWidth = 8 * laser.life;
+    ctx.lineWidth = 10 * laser.life;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.shadowColor = laser.color;
-    ctx.shadowBlur = 16;
+    ctx.shadowBlur = 20;
     ctx.globalAlpha = Math.max(0, laser.life);
     ctx.stroke();
     ctx.restore();
@@ -3204,7 +3386,7 @@ function mainRender(now) {
     ctx.save();
     ctx.beginPath();
     fusionBeams.forEach(b => { ctx.moveTo(b.from.position.x, b.from.position.y); ctx.lineTo(b.to.position.x, b.to.position.y); });
-    ctx.strokeStyle = '#ff5722'; ctx.lineWidth = 10; ctx.lineCap = 'round'; ctx.shadowColor = '#ff3d00'; ctx.shadowBlur = 18; ctx.stroke();
+    ctx.strokeStyle = '#ff5722'; ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.shadowColor = '#ff3d00'; ctx.shadowBlur = 22; ctx.stroke();
     ctx.restore();
   }
 
@@ -3214,12 +3396,14 @@ function mainRender(now) {
     ctx.rotate(b.angle);
 
     const speed = Math.hypot(b.velocity.x, b.velocity.y);
-    if (speed > 6.0) {
+    if (speed > 5.0) {
       ctx.save();
       ctx.beginPath();
-      ctx.arc(0, 0, b.radius * 0.85, 0, Math.PI * 2);
-      ctx.fillStyle = b.charData.color || '#fff';
-      ctx.globalAlpha = 0.28;
+      ctx.arc(0, 0, b.radius * 0.9, 0, Math.PI * 2);
+      ctx.fillStyle = b.charData.border || '#00e5ff';
+      ctx.globalAlpha = 0.35;
+      ctx.shadowColor = b.charData.border || '#00e5ff';
+      ctx.shadowBlur = 12;
       ctx.fill();
       ctx.restore();
     }
@@ -3247,12 +3431,12 @@ function mainRender(now) {
 
     if (b.isFrozenBall) {
       ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0, 229, 255, 0.42)'; ctx.fill();
+      ctx.fillStyle = 'rgba(0, 229, 255, 0.45)'; ctx.fill();
     }
 
     if (b.isGreenBall) {
       ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(76, 175, 80, 0.55)'; ctx.fill();
+      ctx.fillStyle = 'rgba(76, 175, 80, 0.6)'; ctx.fill();
     }
 
     if (b.isHourglass) {
@@ -3267,43 +3451,43 @@ function mainRender(now) {
 
     if (b.isGoldBall) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 3.5; ctx.strokeStyle = '#ffd700'; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#ffd700'; ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10; ctx.stroke();
     }
 
     if (b.isBlackBall) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 3.5; ctx.strokeStyle = '#757575'; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#757575'; ctx.stroke();
     }
 
     if (b.isLeadBall) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 4.5; ctx.strokeStyle = '#37474f'; ctx.stroke();
+      ctx.lineWidth = 5; ctx.strokeStyle = '#37474f'; ctx.stroke();
     }
 
     if (b.isFrozenBall) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 3.5; ctx.strokeStyle = '#00e5ff'; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#00e5ff'; ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 10; ctx.stroke();
     }
 
     if (b.isGreenBall) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 3.5; ctx.strokeStyle = '#69f0ae'; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#69f0ae'; ctx.stroke();
     }
 
     if (b.isBlindBlack) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 3.5; ctx.strokeStyle = '#7c4dff'; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#7c4dff'; ctx.stroke();
     }
 
     if (b.isChainLocked) {
       ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
-      ctx.lineWidth = 3.5; ctx.strokeStyle = '#cfd8dc';
+      ctx.lineWidth = 4; ctx.strokeStyle = '#cfd8dc';
       ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
     }
 
     if (b.isBomb) {
       ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
-      ctx.lineWidth = 4; ctx.strokeStyle = '#ff1744'; ctx.stroke();
+      ctx.lineWidth = 4.5; ctx.strokeStyle = '#ff1744'; ctx.shadowColor = '#ff1744'; ctx.shadowBlur = 12; ctx.stroke();
       ctx.font = '900 13px sans-serif';
       ctx.fillStyle = '#ff1744';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -3313,13 +3497,15 @@ function mainRender(now) {
     if (b.isAttributePending) {
       ctx.beginPath(); ctx.arc(0, 0, r + 6, 0, Math.PI * 2);
       ctx.lineWidth = 4; ctx.strokeStyle = '#ffeb3b';
+      ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 12;
       ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
     }
 
     if (b.isSpecialOrb) {
       ctx.rotate(rotationCounter);
-      ctx.beginPath(); ctx.arc(0, 0, r + 5, 0, Math.PI * 2);
-      ctx.lineWidth = 4; ctx.strokeStyle = '#ffd700';
+      ctx.beginPath(); ctx.arc(0, 0, r + 6, 0, Math.PI * 2);
+      ctx.lineWidth = 4.5; ctx.strokeStyle = '#ffd700';
+      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 15;
       ctx.setLineDash([8, 5]); ctx.stroke(); ctx.setLineDash([]);
     }
 
@@ -3328,8 +3514,8 @@ function mainRender(now) {
 
   for (let i = shockwaves.length - 1; i >= 0; i--) {
     const sw = shockwaves[i];
-    sw.r += 2.8;
-    sw.alpha -= 0.045;
+    sw.r += 3.2;
+    sw.alpha -= 0.04;
     if (sw.alpha <= 0 || sw.r >= sw.maxR) {
       shockwaves.splice(i, 1);
       continue;
@@ -3338,17 +3524,17 @@ function mainRender(now) {
     ctx.beginPath();
     ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
     ctx.strokeStyle = sw.color;
-    ctx.lineWidth = 3.5 * sw.alpha;
+    ctx.lineWidth = 4 * sw.alpha;
     ctx.globalAlpha = Math.max(0, sw.alpha);
     ctx.shadowColor = sw.color;
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 16;
     ctx.stroke();
     ctx.restore();
   }
 
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.x += p.vx; p.y += p.vy; p.life -= 0.024;
+    p.x += p.vx; p.y += p.vy; p.life -= 0.022;
     if (p.life <= 0) { particles.splice(i, 1); continue; }
     ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
     ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.fill(); ctx.globalAlpha = 1;
@@ -3370,7 +3556,7 @@ function mainRender(now) {
     ctx.globalAlpha = Math.max(0, fs.life);
     ctx.fillStyle = fs.isCritical ? '#ffeb3b' : fs.color;
     ctx.shadowColor = fs.isCritical ? '#ff5722' : fs.color;
-    ctx.shadowBlur = fs.isCritical ? 18 : 10;
+    ctx.shadowBlur = fs.isCritical ? 20 : 12;
     ctx.fillText(fs.isCritical ? `${fs.text}!` : fs.text, 0, 0);
     ctx.restore();
   }
