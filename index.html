@@ -8,17 +8,17 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.3.2/pixi.min.js"></script>
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
-     
+      
     body, html {
       width: 100%; height: 100%; height: 100dvh; overflow: hidden;
-      background: #07080b; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #151314; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       transform: translateZ(0);
       backface-visibility: hidden;
     }
 
     #bg-layer {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; overflow: hidden;
-      background: #07080b;
+      background: #151314;
       will-change: transform, opacity;
     }
     .bg-image {
@@ -32,7 +32,7 @@
 
     #bg-dark-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-      background: rgba(0, 0, 0, 0.35); opacity: 0; pointer-events: none;
+      background: rgba(21, 19, 20, 0.45); opacity: 0; pointer-events: none;
       transition: opacity 0.5s ease;
       backdrop-filter: blur(2px);
     }
@@ -67,94 +67,130 @@
       position: relative; z-index: 2; width: 100vw; height: 100%; height: 100dvh;
       display: flex; justify-content: center; align-items: center;
     }
+    
+    /* 遊戲主外框：改為墨黑底搭配暖橘微光線條 */
     #game-frame {
       position: relative; width: 100%; height: 100%; max-width: 440px;
       display: flex; flex-direction: column; overflow: hidden;
-      border-left: 1px solid rgba(69,243,255,0.15); border-right: 1px solid rgba(69,243,255,0.15);
-      box-shadow: 0 0 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(69,243,255,0.05);
+      border-left: 1px solid rgba(224, 123, 70, 0.3); 
+      border-right: 1px solid rgba(224, 123, 70, 0.3);
+      box-shadow: 0 0 40px rgba(0,0,0,0.85), inset 0 0 20px rgba(224, 123, 70, 0.08);
     }
 
+    /* 頂部 HUD */
     #top-hud {
       display: flex; justify-content: space-between; align-items: center;
       padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px 12px;
-      background: rgba(11, 12, 16, 0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      color: #fff; font-size: 11px; font-weight: bold; border-bottom: 1px solid rgba(69,243,255,0.25);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      background: rgba(21, 19, 20, 0.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      color: #ede5d8; font-size: 11px; font-weight: bold; 
+      border-bottom: 1px solid rgba(224, 123, 70, 0.35);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
       z-index: 5;
     }
-    .hud-bar { width: 140px; height: 7px; background: rgba(37, 40, 54, 0.9); border-radius: 4px; overflow: hidden; margin-top: 3px; border: 1px solid rgba(69,243,255,0.2); }
-    .hud-progress { height: 100%; width: 0%; background: linear-gradient(90deg, #00e5ff, #45f3ff); box-shadow: 0 0 10px #45f3ff; transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .hud-stage { font-size: 11px; color: #ffb74d; background: rgba(255, 152, 0, 0.15); padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(255, 152, 0, 0.6); box-shadow: 0 0 8px rgba(255,152,0,0.3); }
-    .hud-timer { font-size: 14px; color: #ffeb3b; font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(255,235,59,0.5); }
+    .hud-bar { 
+      width: 140px; height: 7px; 
+      background: rgba(35, 28, 26, 0.9); 
+      border-radius: 4px; overflow: hidden; margin-top: 3px; 
+      border: 1px solid rgba(224, 123, 70, 0.3); 
+    }
+    .hud-progress { 
+      height: 100%; width: 0%; 
+      background: linear-gradient(90deg, #c96532, #e07b46); 
+      box-shadow: 0 0 10px #e07b46; 
+      transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
+    .hud-stage { 
+      font-size: 11px; color: #ede5d8; 
+      background: rgba(224, 123, 70, 0.25); 
+      padding: 2px 6px; border-radius: 6px; 
+      border: 1px solid rgba(224, 123, 70, 0.6); 
+      box-shadow: 0 0 8px rgba(224, 123, 70, 0.3); 
+    }
+    .hud-timer { 
+      font-size: 14px; color: #f5a623; 
+      font-variant-numeric: tabular-nums; 
+      text-shadow: 0 0 10px rgba(245, 166, 35, 0.5); 
+    }
     .btn-icon {
-      background: rgba(69, 243, 255, 0.1); border: 1px solid rgba(69, 243, 255, 0.3);
-      color: #45f3ff; padding: 4px 8px; border-radius: 8px; font-size: 11px; cursor: pointer;
+      background: rgba(224, 123, 70, 0.15); 
+      border: 1px solid rgba(224, 123, 70, 0.4);
+      color: #ede5d8; padding: 4px 8px; border-radius: 8px; font-size: 11px; cursor: pointer;
       transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .btn-icon:hover { background: rgba(69, 243, 255, 0.25); box-shadow: 0 0 12px rgba(69,243,255,0.4); }
+    .btn-icon:hover { background: rgba(224, 123, 70, 0.3); box-shadow: 0 0 12px rgba(224, 123, 70, 0.4); color: #fff; }
 
     #board-wrapper { position: relative; flex: 1; width: 100%; overflow: hidden; 
-      background: radial-gradient(circle at center, rgba(16, 22, 36, 0.65) 0%, rgba(7, 8, 11, 0.85) 100%);
+      background: radial-gradient(circle at center, rgba(35, 28, 26, 0.65) 0%, rgba(21, 19, 20, 0.88) 100%);
     }
     canvas { width: 100%; height: 100%; display: block; mix-blend-mode: screen; }
     #pixi-container {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3;
     }
-     
+      
     #top-action-bar {
       position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: flex-end; align-items: center; z-index: 5;
     }
     #btn-manual-drop {
-      background: rgba(255, 152, 0, 0.25); border: 1.5px solid #ff9800; color: #ffb74d;
+      background: rgba(224, 123, 70, 0.25); border: 1.5px solid #e07b46; color: #ede5d8;
       padding: 6px 14px; border-radius: 16px; font-size: 11px; font-weight: bold;
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); cursor: pointer;
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
-      box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
+      box-shadow: 0 0 15px rgba(224, 123, 70, 0.3);
     }
-    #btn-manual-drop:hover { box-shadow: 0 0 25px rgba(255, 152, 0, 0.6); transform: scale(1.05); }
+    #btn-manual-drop:hover { box-shadow: 0 0 25px rgba(224, 123, 70, 0.6); transform: scale(1.05); color: #fff; }
     #btn-manual-drop:active { transform: scale(0.92); }
-    #btn-manual-drop:disabled { opacity: 0.4; border-color: #666; color: #888; cursor: not-allowed; box-shadow: none; }
+    #btn-manual-drop:disabled { opacity: 0.4; border-color: #555; color: #888; cursor: not-allowed; box-shadow: none; }
 
     #side-trackers {
       position: absolute; right: 8px; top: 52px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 4;
     }
     .tracker-node {
-      display: flex; align-items: center; gap: 6px; background: rgba(11, 14, 20, 0.78);
-      padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(69,243,255,0.25);
+      display: flex; align-items: center; gap: 6px; 
+      background: rgba(21, 19, 20, 0.82);
+      padding: 3px 8px; border-radius: 12px; 
+      border: 1px solid rgba(224, 123, 70, 0.35);
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
     .tracker-dot { width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
-    .tracker-val { color: #fff; font-size: 10px; font-weight: bold; min-width: 28px; }
+    .tracker-val { color: #ede5d8; font-size: 10px; font-weight: bold; min-width: 28px; }
+
     #active-effect-timer {
       position: absolute; right: 8px; top: 230px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 4;
     }
     .effect-timer-node {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px; background: rgba(255, 87, 34, 0.88);
-      padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.4);
-      color: #fff; font-size: 10px; font-weight: bold; animation: pulseEffect 1s infinite alternate cubic-bezier(0.4, 0, 0.6, 1);
-      box-shadow: 0 0 15px rgba(255, 87, 34, 0.6), inset 0 0 5px rgba(255,255,255,0.5);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; 
+      background: rgba(201, 101, 50, 0.9);
+      padding: 4px 10px; border-radius: 10px; border: 1px solid rgba(237, 229, 216, 0.4);
+      color: #ede5d8; font-size: 10px; font-weight: bold; animation: pulseEffect 1s infinite alternate cubic-bezier(0.4, 0, 0.6, 1);
+      box-shadow: 0 0 15px rgba(224, 123, 70, 0.5), inset 0 0 5px rgba(237, 229, 216, 0.3);
       backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
     }
     @keyframes pulseEffect {
       from { opacity: 0.85; transform: scale(1); }
       to { opacity: 1; transform: scale(1.04); }
     }
+
+    /* 對話框：墨黑底、乳白文字、橘色人名 */
     #bottom-dialogue-box {
       min-height: 85px; padding: 12px 16px calc(env(safe-area-inset-bottom, 16px) + 12px) 16px;
-      background: rgba(11, 12, 16, 0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      border-top: 1px solid rgba(69,243,255,0.25); display: flex; flex-direction: column; justify-content: center;
-      box-shadow: 0 -10px 30px rgba(0,0,0,0.7);
+      background: rgba(21, 19, 20, 0.94); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(224, 123, 70, 0.35); display: flex; flex-direction: column; justify-content: center;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.8);
       z-index: 5;
     }
-    .dialogue-speaker { font-size: 12px; color: #45f3ff; font-weight: bold; margin-bottom: 3px; text-shadow: 0 0 8px rgba(69,243,255,0.5); }
-    .dialogue-text { font-size: 12px; color: #e2e8f0; line-height: 1.4; }
+    .dialogue-speaker { 
+      font-size: 12px; color: #e07b46; font-weight: bold; margin-bottom: 3px; 
+      text-shadow: 0 0 8px rgba(224, 123, 70, 0.5); 
+    }
+    .dialogue-text { font-size: 12px; color: #ede5d8; line-height: 1.4; }
 
+    /* 通用彈窗 Modal 遮罩 */
     .overlay-modal {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(7, 8, 11, 0.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      background: rgba(15, 13, 14, 0.75); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      padding: 20px; z-index: 20; color: #fff; text-align: center;
+      padding: 20px; z-index: 20; color: #ede5d8; text-align: center;
       animation: modalFadeIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     @keyframes modalFadeIn {
@@ -164,81 +200,178 @@
     #result-rank-badge {
       display: inline-block;
       padding: 4px 20px;
-      border: 3px solid #ffd700;
+      border: 3px solid #f5a623;
       border-radius: 50%;
       width: 85px;
       height: 85px;
       line-height: 75px;
-      background: rgba(255, 215, 0, 0.18);
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+      background: rgba(245, 166, 35, 0.18);
+      box-shadow: 0 0 30px rgba(245, 166, 35, 0.5);
       animation: rankPulse 1.5s ease-in-out infinite alternate;
     }
     @keyframes rankPulse {
-      from { transform: scale(1); box-shadow: 0 0 15px rgba(255,215,0,0.4); }
-      to { transform: scale(1.08); box-shadow: 0 0 35px rgba(255,215,0,0.9); }
+      from { transform: scale(1); box-shadow: 0 0 15px rgba(245, 166, 35, 0.4); }
+      to { transform: scale(1.08); box-shadow: 0 0 35px rgba(245, 166, 35, 0.8); }
     }
+
+    /* 彈窗卡片本體：帶暖調的墨黑 */
     .modal-card {
-      background: rgba(24, 29, 38, 0.95); border: 1px solid rgba(69, 243, 255, 0.4); border-radius: 16px;
+      background: rgba(30, 24, 23, 0.96); 
+      border: 1px solid rgba(224, 123, 70, 0.45); 
+      border-radius: 16px;
       padding: 22px; width: 100%; max-width: 380px; max-height: 84vh; overflow-y: auto;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 15px rgba(69,243,255,0.1);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9), inset 0 0 15px rgba(224, 123, 70, 0.08);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
+    .modal-card h2, .modal-card h3 {
+      color: #ede5d8;
+    }
+
+    /* 按鈕體系：暖橘主按鈕、墨黑乳白次按鈕 */
     .btn {
-      background: linear-gradient(135deg, #00e5ff, #45f3ff); color: #0b0c10; font-weight: bold; border: none;
+      background: linear-gradient(135deg, #e07b46, #c96532); 
+      color: #151314; font-weight: 800; border: none;
       padding: 12px 26px; border-radius: 24px; font-size: 14px; cursor: pointer;
-      box-shadow: 0 0 15px rgba(69, 243, 255, 0.3);
+      box-shadow: 0 0 16px rgba(224, 123, 70, 0.35);
       transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .btn:hover { box-shadow: 0 0 25px rgba(69, 243, 255, 0.6); transform: translateY(-2px); }
-    .btn.danger { background: linear-gradient(135deg, #ff1744, #ff5252); color: #fff; box-shadow: 0 0 15px rgba(255, 23, 68, 0.3); }
-    .btn.danger:hover { box-shadow: 0 0 25px rgba(255, 23, 68, 0.6); }
-    .btn.sub { background: rgba(255, 255, 255, 0.08); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: none; }
-    .btn.sub:hover { background: rgba(255, 255, 255, 0.15); color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.2); }
-    .btn.gold { background: linear-gradient(135deg, #ffb300, #ff9800); color: #fff; box-shadow: 0 0 15px rgba(255, 152, 0, 0.4); }
-    .btn.gold:hover { box-shadow: 0 0 25px rgba(255, 152, 0, 0.7); }
+    .btn:hover { 
+      box-shadow: 0 0 25px rgba(224, 123, 70, 0.65); 
+      transform: translateY(-2px); 
+      color: #ede5d8; 
+    }
+    .btn.danger { 
+      background: linear-gradient(135deg, #c62828, #e53935); 
+      color: #ede5d8; box-shadow: 0 0 15px rgba(229, 57, 53, 0.3); 
+    }
+    .btn.danger:hover { box-shadow: 0 0 25px rgba(229, 57, 53, 0.6); }
+    
+    .btn.sub { 
+      background: rgba(21, 19, 20, 0.7); 
+      color: #d6cbbe; 
+      border: 1px solid rgba(224, 123, 70, 0.4); 
+      box-shadow: none; 
+    }
+    .btn.sub:hover { 
+      background: rgba(224, 123, 70, 0.2); 
+      color: #ede5d8; 
+      border-color: #e07b46; 
+      box-shadow: 0 0 12px rgba(224, 123, 70, 0.3); 
+    }
+    
+    .btn.gold { 
+      background: linear-gradient(135deg, #f5a623, #e07b46); 
+      color: #151314; 
+      box-shadow: 0 0 15px rgba(245, 166, 35, 0.4); 
+    }
+    .btn.gold:hover { box-shadow: 0 0 25px rgba(245, 166, 35, 0.7); color: #ede5d8; }
     .btn:active { transform: scale(0.96); }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
 
-    #title-screen { z-index: 30; background: rgba(11, 12, 16, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
-    .title-logo { font-size: 42px; font-weight: 900; letter-spacing: 6px; color: #45f3ff; text-shadow: 0 0 15px rgba(69,243,255,0.5); margin-bottom: 6px; }
-    .title-sub { font-size: 13px; color: #ff8a65; letter-spacing: 3px; margin-bottom: 24px; text-shadow: 0 0 8px rgba(255,138,101,0.4); }
+    /* 主畫面選單 Screen */
+    #title-screen { 
+      z-index: 30; 
+      background: rgba(18, 15, 16, 0.4); 
+      backdrop-filter: blur(2px); 
+      -webkit-backdrop-filter: blur(2px);
+      justify-content: space-between !important;
+      padding: calc(env(safe-area-inset-top, 0px) + 16px) 24px calc(env(safe-area-inset-bottom, 0px) + 36px) 24px !important;
+    }
+
+    .title-header-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-top: clamp(60px, 8vh, 88px);
+    }
+
+    .title-footer-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* 主標題：毛皮暖橘，外發光 */
+    .title-logo { 
+      font-size: clamp(32px, 5.5vh, 44px); 
+      font-weight: 900; 
+      letter-spacing: 6px; 
+      color: #e07b46; 
+      text-shadow: 0 0 20px rgba(224, 123, 70, 0.6), 0 2px 4px rgba(0, 0, 0, 0.8); 
+      margin-bottom: 4px; 
+    }
+
+    /* 副標題：吻部乳白 */
+    .title-sub { 
+      font-size: clamp(11px, 1.8vh, 13px); 
+      color: #ede5d8; 
+      letter-spacing: 3px; 
+      text-shadow: 0 0 8px rgba(237, 229, 216, 0.4), 0 2px 4px rgba(0, 0, 0, 0.8); 
+    }
+
+    /* 說明文：米白微灰 */
+    .title-desc {
+      font-size: clamp(11px, 1.6vh, 12px);
+      color: #d6cbbe;
+      max-width: 270px;
+      line-height: 1.55;
+      margin-top: clamp(10px, 2vh, 18px);
+      margin-bottom: 0;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+    }
 
     .title-btn-group {
       display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 200px;
     }
     #btn-open-gallery {
-      background: rgba(30, 41, 59, 0.8);
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.4);
-    }
-    .leader-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; max-height: 240px; overflow-y: auto; }
-    .leader-item { background: rgba(11, 12, 16, 0.8); padding: 6px 4px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; text-align: center; transition: all 0.2s; }
-    .leader-item:hover { border-color: rgba(69,243,255,0.5); transform: translateY(-2px); }
-    .leader-item.selected { border-color: #ff5722; background: rgba(38, 25, 25, 0.9); box-shadow: 0 0 15px rgba(255,87,34,0.4); }
-    .leader-avatar-thumb { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 3px; border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 0 10px rgba(0,0,0,0.5); }
-    .leader-item div:nth-child(2) { 
-      font-weight: bold; 
-      font-size: 12px; 
-      color: #f1f5f9; 
+      background: rgba(21, 19, 20, 0.75);
+      color: #ede5d8;
+      border: 1px solid rgba(224, 123, 70, 0.45);
     }
 
-    .clear-badge { font-size: 10px; color: #ffeb3b; display: block; margin-top: 2px; text-shadow: 0 0 5px rgba(255,235,59,0.5); }
+    /* 選擇隊長面板 */
+    .leader-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; max-height: 240px; overflow-y: auto; }
+    .leader-item { 
+      background: rgba(21, 19, 20, 0.85); padding: 6px 4px; border-radius: 10px; 
+      border: 1px solid rgba(237, 229, 216, 0.15); cursor: pointer; text-align: center; transition: all 0.2s; 
+    }
+    .leader-item:hover { border-color: rgba(224, 123, 70, 0.6); transform: translateY(-2px); }
+    .leader-item.selected { 
+      border-color: #e07b46; background: rgba(54, 33, 26, 0.95); 
+      box-shadow: 0 0 15px rgba(224, 123, 70, 0.5); 
+    }
+    .leader-avatar-thumb { 
+      width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 3px; 
+      border: 2px solid rgba(237, 229, 216, 0.25); box-shadow: 0 0 10px rgba(0,0,0,0.6); 
+    }
+    .leader-item div:nth-child(2) { 
+      font-weight: bold; font-size: 12px; color: #ede5d8; 
+    }
+    .clear-badge { font-size: 10px; color: #f5a623; display: block; margin-top: 2px; text-shadow: 0 0 5px rgba(245, 166, 35, 0.5); }
 
     .variant-selector { margin: 10px 0; display: flex; gap: 6px; justify-content: center; }
     .variant-btn {
-      font-size: 10px; padding: 5px 10px; border-radius: 14px; background: rgba(18, 24, 32, 0.9); border: 1px solid rgba(255,255,255,0.2); color: #bbb; cursor: pointer;
-      transition: all 0.2s;
+      font-size: 10px; padding: 5px 10px; border-radius: 14px; 
+      background: rgba(25, 21, 21, 0.9); border: 1px solid rgba(237, 229, 216, 0.2); 
+      color: #bbb; cursor: pointer; transition: all 0.2s;
     }
-    .variant-btn.active { border-color: #ff5722; color: #fff; background: rgba(51, 26, 26, 0.95); font-weight: bold; box-shadow: 0 0 10px rgba(255,87,34,0.4); }
+    .variant-btn.active { 
+      border-color: #e07b46; color: #ede5d8; 
+      background: rgba(65, 34, 25, 0.95); font-weight: bold; 
+      box-shadow: 0 0 10px rgba(224, 123, 70, 0.4); 
+    }
 
     #banner-notify {
       position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
-      background: linear-gradient(90deg, transparent, rgba(255, 87, 34, 0.95), transparent);
-      color: #fff; width: 100%; padding: 14px 0; text-align: center; font-size: 17px; font-weight: bold;
+      background: linear-gradient(90deg, transparent, rgba(201, 101, 50, 0.95), transparent);
+      color: #ede5d8; width: 100%; padding: 14px 0; text-align: center; font-size: 17px; font-weight: bold;
       letter-spacing: 2px; pointer-events: none; opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 10;
-      text-shadow: 0 0 15px rgba(255,87,34,0.8);
+      text-shadow: 0 0 15px rgba(224, 123, 70, 0.8);
     }
 
+    /* 結局對話框畫面 */
     #ending-stage-screen {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 40;
       display: none; flex-direction: column; justify-content: space-between;
@@ -257,32 +390,40 @@
       padding: 16px 16px calc(env(safe-area-inset-bottom, 20px) + 16px) 16px;
     }
     #ending-dialogue-box {
-      background: rgba(11, 14, 20, 0.94); border: 1.5px solid rgba(69, 243, 255, 0.6);
-      border-radius: 18px; padding: 22px 28px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-      box-shadow: 0 0 45px rgba(0,0,0,0.9), inset 0 0 20px rgba(69,243,255,0.15); max-width: 820px; margin: 0 auto; 
+      background: rgba(21, 19, 20, 0.94); 
+      border: 1.5px solid rgba(224, 123, 70, 0.65);
+      border-radius: 18px; padding: 22px 28px; 
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 0 45px rgba(0,0,0,0.9), inset 0 0 20px rgba(224, 123, 70, 0.15); 
+      max-width: 820px; margin: 0 auto; 
       cursor: pointer;
     }
-    #ending-speaker { font-size: 18px; font-weight: bold; color: #45f3ff; margin-bottom: 8px; text-shadow: 0 0 10px rgba(69,243,255,0.6); } 
-    #ending-text-body { font-size: 17px; color: #eee; line-height: 1.8; min-height: 70px; } 
+    #ending-speaker { 
+      font-size: 18px; font-weight: bold; color: #e07b46; 
+      margin-bottom: 8px; text-shadow: 0 0 10px rgba(224, 123, 70, 0.6); 
+    } 
+    #ending-text-body { font-size: 17px; color: #ede5d8; line-height: 1.8; min-height: 70px; } 
     .typing-cursor {
-      display: inline-block; width: 2px; height: 16px; background: #ff9800;
+      display: inline-block; width: 2px; height: 16px; background: #e07b46;
       margin-left: 4px; vertical-align: middle; animation: blink 0.7s infinite;
-      box-shadow: 0 0 8px #ff9800;
+      box-shadow: 0 0 8px #e07b46;
     }
     @keyframes blink { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
 
+    /* 回憶畫廊卡片 */
     #modal-gallery { z-index: 35; }
     .gallery-grid {
       display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0; max-height: 320px; overflow-y: auto;
     }
     .gallery-card {
-      background: rgba(16, 20, 29, 0.9); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 10px;
+      background: rgba(25, 21, 21, 0.92); border: 1px solid rgba(237, 229, 216, 0.15); border-radius: 10px; padding: 10px;
       display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: all 0.2s;
     }
-    .gallery-card:hover { border-color: rgba(69,243,255,0.5); transform: translateY(-2px); }
-    .gallery-card.unlocked { border-color: #ff9800; box-shadow: 0 0 15px rgba(255,152,0,0.3); }
+    .gallery-card:hover { border-color: rgba(224, 123, 70, 0.6); transform: translateY(-2px); }
+    .gallery-card.unlocked { border-color: #e07b46; box-shadow: 0 0 15px rgba(224, 123, 70, 0.3); }
     .gallery-card.locked { opacity: 0.4; cursor: not-allowed; }
 
+    /* 音樂播放器：墨黑外底搭配橘色光暈 */
     .music-player-container {
       position: fixed;
       bottom: 20px;
@@ -297,9 +438,9 @@
       width: 44px;
       height: 44px;
       border-radius: 50%;
-      background: rgba(30, 41, 59, 0.85);
-      border: 1px solid rgba(56, 189, 248, 0.6);
-      color: #38bdf8;
+      background: rgba(25, 21, 21, 0.85);
+      border: 1px solid rgba(224, 123, 70, 0.5);
+      color: #ede5d8;
       font-size: 1.1rem;
       display: flex;
       justify-content: center;
@@ -307,18 +448,18 @@
       cursor: pointer;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(56,189,248,0.3);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(224, 123, 70, 0.25);
       transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       padding: 0 !important;
     }
     .music-btn:hover {
-      background: rgba(56, 189, 248, 0.25);
+      background: rgba(224, 123, 70, 0.25);
       transform: scale(1.08);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 20px rgba(56,189,248,0.6);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 20px rgba(224, 123, 70, 0.5);
     }
     .music-info-panel {
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: rgba(21, 19, 20, 0.9);
+      border: 1px solid rgba(224, 123, 70, 0.4);
       border-radius: 20px;
       padding: 6px 14px;
       display: flex;
@@ -330,7 +471,7 @@
     }
     .music-title-text {
       font-size: 0.75rem;
-      color: #e2e8f0;
+      color: #ede5d8;
       max-width: 110px;
       white-space: nowrap;
       overflow: hidden;
@@ -343,16 +484,16 @@
     .music-sub-btn {
       background: none;
       border: none;
-      color: #38bdf8;
+      color: #e07b46;
       font-size: 0.8rem;
       cursor: pointer;
       padding: 2px;
-      opacity: 0.8;
+      opacity: 0.85;
       transition: opacity 0.2s;
     }
     .music-sub-btn:hover {
       opacity: 1;
-      text-shadow: 0 0 8px #38bdf8;
+      text-shadow: 0 0 8px #e07b46;
     }
     body.playing-active .music-player-container,
     #ending-stage-screen[style*="flex"] ~ .music-player-container, 
@@ -387,19 +528,25 @@
   <div id="game-frame">
 
     <div id="title-screen" class="overlay-modal">
-      <div class="title-logo">無限元素</div>
-      <div class="title-sub">CHAIN BURST</div>
-      <p style="font-size: 12px; color: #aaa; max-width: 260px; line-height: 1.6; margin-bottom: 24px;">
-          亞爾克似乎對於如何與夥伴共鳴感到十分苦惱<br>
-          快來幫幫他吧！<br><br>
-          挑戰三階段的權能試煉<br>
-          解鎖專屬結算插圖與分支結局！
-      </p>
-      <div class="title-btn-group">
-        <button class="btn" id="btn-enter-game" onclick="playSynthPopSFX()">開始共鳴</button>
-        <button class="btn sub" id="btn-open-gallery" onclick="playSynthPopSFX()">回憶畫廊</button>
-      </div>
+  <!-- 頂部區塊：標題 + 副標 + 解說文字 -->
+  <div class="title-header-group">
+    <div class="title-logo">無限元素</div>
+    <div class="title-sub">CHAIN BURST</div>
+    <p class="title-desc">
+      <br><br>
+      亞爾克似乎對於如何與夥伴共鳴感到十分苦惱<br>
+      快來幫幫他吧！<br>
+    </p>
+  </div>
+
+  <!-- 底部區塊：純按鈕群組 -->
+  <div class="title-footer-group">
+    <div class="title-btn-group">
+      <button class="btn" id="btn-enter-game" onclick="playSynthPopSFX()">開始共鳴</button>
+      <button class="btn sub" id="btn-open-gallery" onclick="playSynthPopSFX()">回憶畫廊</button>
     </div>
+  </div>
+</div>
 
     <div id="top-hud">
       <div style="display: flex; flex-direction: column; gap: 3px;">
@@ -3106,9 +3253,10 @@ const FIXED_STEP = (1000 / 60) * 0.84;
 function drawBoardFrame() {
   if (isBorderOmitted) return;
   ctx.save();
-  ctx.strokeStyle = isStoneShieldActive ? '#00e676' : 'rgba(69, 243, 255, 0.45)';
+  // 護盾狀態維持亮綠，一般狀態改為暖橘光
+  ctx.strokeStyle = isStoneShieldActive ? '#00e676' : 'rgba(224, 123, 70, 0.55)';
   ctx.lineWidth = isStoneShieldActive ? 4.5 : 2.5;
-  ctx.shadowColor = isStoneShieldActive ? '#00e676' : 'rgba(69, 243, 255, 0.7)';
+  ctx.shadowColor = isStoneShieldActive ? '#00e676' : 'rgba(224, 123, 70, 0.8)';
   ctx.shadowBlur = 12;
   
   const r = 12;
@@ -3361,10 +3509,11 @@ function mainRender(now) {
   const isHighTension = pct >= 0.8 || performance.now() < waterBonusEndTime;
   const glowAlpha = 0.3 + Math.sin(now * 0.006) * 0.2;
   ctx.save();
-  ctx.strokeStyle = isHighTension ? `rgba(255, 152, 0, ${glowAlpha + 0.35})` : `rgba(69, 243, 255, ${glowAlpha + 0.15})`;
+  // 高張力狀態（分數接近過關）為琥珀金強光，一般狀態為暖橘色呼吸脈動
+  ctx.strokeStyle = isHighTension ? `rgba(245, 166, 35, ${glowAlpha + 0.35})` : `rgba(224, 123, 70, ${glowAlpha + 0.15})`;
   ctx.lineWidth = isHighTension ? 9 : 5;
-  ctx.shadowColor = isHighTension ? '#ff9800' : '#45f3ff';
-  ctx.shadowBlur = isHighTension ? 24 : 12;
+  ctx.shadowColor = isHighTension ? '#f5a623' : '#e07b46';
+  ctx.shadowBlur = isHighTension ? 26 : 14;
   ctx.strokeRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
   ctx.restore();
 
