@@ -84,6 +84,7 @@
       border-bottom: 1px solid rgba(224, 123, 70, 0.35);
       box-shadow: 0 4px 20px rgba(0,0,0,0.6);
       z-index: 5;
+      white-space: nowrap; /* 防止文字換行跳動 */
     }
     .hud-bar { 
       width: 140px; height: 7px; 
@@ -556,18 +557,18 @@
     </div>
 
     <div id="top-hud">
-    <div style="display: flex; flex-direction: column; gap: 3px; flex: 1;">
-      <div style="display: flex; align-items: center; gap: 6px;">
-        <span id="stage-badge" class="hud-stage">Stage 1/3</span>
-        <span id="target-desc-label" style="font-size: 11px; color: #ccc;">目標: <span id="score-text">0</span> / <span id="target-score">42000</span></span>
+      <div style="display: flex; flex-direction: column; gap: 3px; flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+          <span id="stage-badge" class="hud-stage">Stage 1/3</span>
+          <span id="target-desc-label" style="font-size: 11px; color: #ccc;">目標: <span id="score-text">0</span> / <span id="target-score">42000</span></span>
+        </div>
+        <div class="hud-bar"><div id="score-progress" class="hud-progress"></div></div>
       </div>
-      <div class="hud-bar"><div id="score-progress" class="hud-progress"></div></div>
+      <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+        <div class="hud-timer" id="timer-text">03:00</div>
+        <button class="btn-icon" id="btn-open-quit" onclick="playSynthPopSFX()">選單</button>
+      </div>
     </div>
-    <div class="hud-timer" id="timer-text" style="position: absolute; left: 50%; transform: translateX(-50%);">03:00</div>
-    <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: flex-end;">
-      <button class="btn-icon" id="btn-open-quit" onclick="playSynthPopSFX()">選單</button>
-    </div>
-  </div>
 
     <div id="board-wrapper">
       <div id="top-action-bar">
@@ -899,7 +900,7 @@ setGlobalBackground('images/background.webp', false, false);
 const CHARACTER_DATABASE = [
   {
     id: 'kulu', name: '克爾', element: '融元素', color: '#1a3b5c', border: '#ff3333',
-    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'positive', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【理解】建立意識流連結消除 8 顆角色珠，並消除 3 顆妨礙珠。',
     bgUrl: 'images/kulu_bg.webp', isLandscape: true,
     cheers: ['手感不錯嘛。別鬆懈，跟著我一口氣衝上去！', '搞定，我們一起突破最後的挑戰吧！'],
@@ -919,7 +920,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'arc', name: '亞爾克', element: '震元素', color: '#b26a00', border: '#ffb300',
-    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'positive', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【震動】引發地震波消除 8 顆角色珠，並消除 3 顆妨礙珠。',
     bgUrl: 'images/arc_bg.webp', isLandscape: true,
     cheers: ['太好了！這段共鳴的節奏非常棒！調整好呼吸，下一階段也要好好幫我喔！', '進入最後關頭了！我要和你一起拿下完勝！'],
@@ -948,7 +949,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'takawa', name: '高和', element: '恆元素', color: '#1565c0', border: '#42a5f5',
-    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'positive', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【恆定】免疫妨礙效果發動 8 秒，並消除 5 顆妨礙珠。',
     bgUrl: 'images/takawa_bg.webp', isLandscape: true,
     cheers: ['波次一的數據已記錄完畢，繼續前進。', '波次二解析完成，我們要好好把握機會深入調查！'],
@@ -985,15 +986,15 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'kokumei', name: '克明', element: '沌元素', color: '#263238', border: '#78909c',
-    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【混沌】轉襲 3 顆吞噬珠（每 3 秒扣 100 分），15 秒內落下的角色珠大小不定。',
+    type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
+    desc: '【混沌】轉襲 4 顆吞噬珠（每 3 秒扣 100 分），10 秒內落下的角色珠大小不定。',
     bgUrl: 'images/kokumei_bg.webp', isLandscape: true,
     cheers: ['局勢正按照預期的方向推進，沌元素的反噬也在可控範圍內。', '順利跨越第二階段，但直到最後一刻都不能鬆懈！'],
     endingText: '不論是我哥哥還是高翔，他們都擔心我過頭了啦！這次共鳴的結果不就證明我有能力掌控全局了嗎？謝謝你的幫忙，願狼神保佑你。'
   },
   {
     id: 'igarashi', name: '五十嵐', element: '嵐元素', color: '#00838f', border: '#26c6da',
-    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'positive', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【氣候】產生暴風 1 秒，連鎖引爆 8 顆珠子，並消除 3 個妨礙珠。',
     bgUrl: 'images/igarashi_bg.webp', isLandscape: true,
     cheers: ['很好，你的行動沒有絲毫慌亂，基本功很紮實。', '第二波也跨過去了，看著你們成長真是一大欣慰。'],
@@ -1001,7 +1002,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'area', name: '艾瑞爾', element: '斷元素', color: '#37474f', border: '#eceff1',
-    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'positive', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【斷裂】先重力反轉 1 秒，再左右重力牽引 1 秒，落下 5 顆萬配珠，並消除 3 個妨礙珠。',
     bgUrl: 'images/area_bg.webp', isLandscape: true,
     cheers: ['嘿，這不過小事一樁罷了。', '簡單！我會撕裂所有阻礙的！'],
@@ -1017,14 +1018,14 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'wakima', name: '瓦奇瑪', element: '位元素', color: '#00897b', border: '#80deea',
-    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'positive', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【權位】轉襲 5 顆金珠與 5 顆萬配珠，啟動 1 秒引力後漂浮 2 秒，並消除 5 個妨礙珠。',
     bgUrl: 'images/wakima_bg.webp', isLandscape: true,
     cheers: ['第一關輕鬆搞定，還不感謝本大明神的庇佑啊！', '第二階段也過啦！等這場打完我要吃好多布丁犒賞自己！'],
     endingText: '哈哈，共鳴大成功！本大明神正式冊封你為頭號信徒，特許你天天都有吃不完的甜點！不過說好了，收到的甜食全都得拿來供奉本人我才行！'
   },
   { id: 'rofena', name: '羅菲娜', element: '土屬性', color: '#bf360c', border: '#ff7043', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【土屬性】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/rofena_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['政法條理清晰無誤，第一階段完美得分！', '第二階段也很順利，情勢全在預料之中！'], 
@@ -1032,16 +1033,16 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'volt', name: '弗爾特', element: '滅元素', color: '#4a148c', border: '#ab47bc',
-    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【寂滅】落下 6 顆小黑質珠，產生 1.5 秒重力牽引。',
+    type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
+    desc: '【寂滅】落下 4 顆小黑質珠，產生 1.5 秒重力牽引。',
     bgUrl: 'images/volt_bg.webp', isLandscape: true,
     cheers: ['雜訊已被徹底湮滅，繼續執行清除作業。', '已敵人確認瓦解，誰也別想在我的領域裡耍花招。'],
     endingText: '哼，你的應對能力超出了我原本的預期，比那個普洛特有用多了。這場共鳴真是印象深刻，但我還得去忙，剩下的就交給五十九號映像者陪你吧。'
   },
   {
     id: 'proto', name: '普洛特', element: '毀元素', color: '#d84315', border: '#ff8a65',
-    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【摧毀】落下 3 顆大黑質珠、2 顆小吞噬珠與引發地震波。',
+    type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
+    desc: '【摧毀】落下 3 顆小黑質珠、2 顆小吞噬珠與引發地震波。',
     bgUrl: 'images/proto_bg.webp', isLandscape: true,
     cheers: ['這點阻礙不算什麼！拿出魄力就能一口氣砸開它！', '第二階段也粉碎啦，輕鬆簡單！'],
     endingText: '我的得力助手，跟你一塊並肩作戰的感覺實在是痛快極了。怎麼樣，要不要考慮加入我們新生詛碼團一起大展身手？要是你也來了，泊信那傢伙肯定也會高興得不得了！',
@@ -1056,7 +1057,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'veil', name: '白珥', element: '命元素', color: '#880e4f', border: '#ec407a',
-    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
+    type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
     desc: '【魂命】轉襲 10 顆冰封珠、轉襲 2 顆黑質珠、落下 2 顆超載珠，盤面漂浮 2 秒。',
     bgUrl: 'images/veil_bg.webp', isLandscape: true,
     cheers: ['一場賞心悅目的初戰。', '第二階段也結束了，局勢正按照推演鋪展開來……'],
@@ -1064,7 +1065,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'zoma', name: '詛碼', element: '究極元素', color: '#311b92', border: '#7e57c2',
-    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
+    type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
     desc: '【侵染】轉襲 3 顆黑質珠、落下 2 顆超載珠，並引發 2 秒引力黑洞。',
     bgUrl: 'images/zoma_bg.webp', isLandscape: true,
     cheers: ['節奏優雅，第一幕如預期般落幕。', '第二階段應聲瓦解。在我的美學面前，阻礙終究只是點綴雲煙。'],
@@ -1072,7 +1073,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'ultima', name: '阿爾提瑪', element: '闇屬性', color: '#2b1055', border: '#a855f7',
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17,
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15,
     desc: '【闇屬性】轉襲 15 顆幕盲珠，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。',
     bgUrl: 'images/ultima_bg.webp', isLandscape: true,
     cheers: ['第一階段只有這點程度嗎？完全不夠看啊。', '第二階段也毫無困難，真是有些失望呢。'],
@@ -1088,7 +1089,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'zarion', name: '澤里恩', element: '耀元素', color: '#546e7a', border: '#ffa726',
-    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'positive', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【成長】8 秒內落下的角色珠尺寸放大，變大盤面 10 顆角色珠與轉襲 5 顆萬配珠，並消除 5 個妨礙珠。',
     bgUrl: 'images/zarion_bg.webp', isLandscape: true,
     cheers: ['太好了……第一階段順利通過了！我有幫上忙，對吧？', '第二階段也達成了！這一次我絕對不會停止閃耀！'],
@@ -1112,7 +1113,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'kuzure', name: '崩', element: '崩元素', color: '#3e2723', border: '#8d6e63',
-    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
+    type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
     desc: '【崩壞】引發地震波，並轉襲 4 顆大尺寸黑質珠。',
     bgUrl: 'images/kuzure_bg.webp', isLandscape: true,
     cheers: ['哼，第一段打得還算說得過去！', '突破第二階段，都是有我的鐵拳開路！'],
@@ -1128,7 +1129,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'osae', name: '制', element: '制元素', color: '#827717', border: '#c0ca33',
-    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
+    type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
     desc: '【壓制】8 秒內落下的角色珠尺寸變小，縮小 15 顆角色珠，落下 1 吞噬珠、2 黑質珠、1 超載珠、1 冰封珠。',
     bgUrl: 'images/osae_bg.webp', isLandscape: true,
     cheers: ['嘿嘿！動力引擎轉速正常！', '快點結束吧，我的寶貝正在等我呢！'],
@@ -1144,7 +1145,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'rub', name: '劫', element: '劫元素', color: '#1a237e', border: '#5c6bc0',
-    type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
+    type: 'negative', roleType: '賦形者', reqLeader: 14, reqSupport: 15,
     desc: '【奪取】6 秒內權能無效化，落下 3 顆超載珠與 2 顆黑質珠。',
     bgUrl: 'images/rub_bg.webp', isLandscape: true,
     cheers: ['哼，這點程度不過是理所應當的。', '快了，就都快是我的了！'],
@@ -1159,7 +1160,7 @@ const CHARACTER_DATABASE = [
     ]
   },
   { id: 'electric', name: '伊蕾琪', element: '雷屬性', color: '#f57f17', border: '#ffee58', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【雷屬性】轉襲 3 顆黃金珠、將 3 顆角色珠尺寸變小、轉襲 2 顆吞噬珠，並消除 5 顆妨礙珠！', 
     bgUrl: 'images/electric_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['直播間點讚數破表啦！留言回到手軟呢～', '輕鬆通關，蕾寶的表現完美無瑕！'], 
@@ -1167,7 +1168,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'raku', name: '埒', element: '埒元素', color: '#1b5e20', border: '#66bb6a',
-    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'positive', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【躍離】變大 10 顆、變小 10 顆珠子，轉襲 5 顆黃金珠與 5 顆萬配珠，並消除 5 妨礙珠。',
     bgUrl: 'images/raku_bg.webp', isLandscape: true,
     cheers: ['約定好了，我們要一起拚到最後喔！', '這趟旅途十分漫長，但總有盡頭的。'],
@@ -1175,182 +1176,182 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'garoz', name: '犺', element: '犺元素', color: '#424242', border: '#9e9e9e',
-    type: 'negative', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    type: 'negative', roleType: '賦形者', reqLeader: 14, reqSupport: 16,
     desc: '【鎔鑄】連鎖引爆 8 顆角色珠，轉襲 2 顆超載珠，並消除 3 個妨礙珠。',
     bgUrl: 'images/garoz_bg.webp', isLandscape: true,
     cheers: ['交給我就好，我選的路不必旁人置喙。', '不陪我也沒關係，我會自己前進的。'],
     endingText: '哼，真沒想到你竟然能一路跟到這裡來，看在這分上，我姑且承認你的執著確實有點本事。不過接下來要面對的可是一條凶險無比的漫長險路，你……真的還有辦法跟上來嗎？'
   },
   { id: 'sugar', name: '霜糖紗母', element: '火屬性', color: '#f06292', border: '#f8bbd0', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【火屬性】消除 3 顆角色珠，將 3 顆角色珠尺寸變大，轉襲 2 顆超載珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/sugar_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['烘焙的火候剛剛好，完美出爐！', '香氣已經散開囉，等等就能好好品嘗了！'], 
     endingText: '香噴噴的現烤麵包剛出爐囉，趕快趁熱嚐嚐味道怎樣！今天真的非常謝謝你抽空來陪我，這份特製的焦糖蜜匣，就讓你當作伴手禮帶回去好好享用吧！' 
   },
   { id: 'owl', name: '夜瞳梟賢', element: '風屬性', color: '#37474f', border: '#78909c', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【風屬性】產生暴風 1.5 秒，將 3 顆角色珠尺寸變大，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/owl_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['生命跡象穩定，第一階段完美急救完成。', '第二階段清創完成，氣流與節奏都在掌握之中。'], 
     endingText: '共鳴和外科手術其實沒兩樣，冷靜與果斷都是不可或缺的關鍵技能。這次的期中考你已經漂亮地通過了，接下來的期末考也得繼續保持這股氣勢，加油喔！' 
   },
   { id: 'doutou', name: '怒濤銳步', element: '風屬性', color: '#e65100', border: '#ff9800', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【風屬性】產生暴風 1.5 秒，將 3 顆角色珠尺寸變大，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/doutou_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['疾速如風，輕鬆甩開對手！', '追得上我嗎？前方路還遠著呢！'], 
     endingText: '速度挺快的嘛！怎麼樣，明天起要不要考慮加入我們田徑社的晨跑行列？有膽的話就繼續試著在跑道上追趕我吧，我保證，你很快就會無可救藥地愛上這種迎風狂奔、追著我的感覺……' 
   },
   { id: 'deer', name: '繪靈鹿茲', element: '水屬性', color: '#00796b', border: '#4db6ac', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【水屬性】 將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，5 秒內消除每球 500 分，漂浮 2 秒並消除 5 顆妨礙珠！', 
     bgUrl: 'images/deer_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['想法狂湧而出，我有傑作的靈感啦！', '這個線索擺到這裏的話……居然是新的挑戰難關呢！'], 
     endingText: '只要有你這位頂尖得力助手的全力協助，這世上就沒有我繪靈鹿茲解不開的謎題！走吧，接下來我們要一起去挑戰更加離奇神祕的重大案件喔！' 
   },
   { id: 'teiner', name: '翠芽泰納', element: '土屬性', color: '#33691e', border: '#8bc34a', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【土屬性】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/teiner_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['黑土滋壤、綠意萌芽！', '只要交給我，即便是荒地也能開出勝利的花朵！'], 
     endingText: '瞧瞧這片土地，枯萎的絕境裡終於迎來了復甦的契機，而這一切全都是你傾盡全力付出的成果！接下來就讓我們並肩攜手，讓它永遠充滿生機與綠意吧！' 
   },
   { id: 'fox', name: '睿策樺霖', element: '光屬性', color: '#e65100', border: '#ffb74d', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【光屬性】破除全場幕盲珠，將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/fox_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['只要掌握學識，就能邁向未來！', '表現不錯，繼續保持下去喔。'], 
     endingText: '你是一個非常有潛力、資質極佳的好學生，我相信等你順利畢業之後，未來一定能成為本校引以為傲的傑出校友，甚至有機會獲頒專屬的殊榮稱號呢！' 
   },
   { id: 'racoon', name: '影識秘爪', element: '闇屬性', color: '#4e342e', border: '#9c27b0', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【闇屬性】轉襲 15 顆幕盲珠，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/racoon_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['快了，快能夠揭開真相了。', '就在前面，真相就在那裡。'], 
     endingText: '歷史的紀錄與世人的評價，向來是由觀察者所定義的，而你今天的表現，無疑在其中寫下了最為璀璨的一頁。放心吧，這份珍貴的紀錄我會親自收錄，並負責在學識之庫中永遠保存下去。' 
   },
   { id: 'tia', name: '緹婭', element: '冰屬性', color: '#006064', border: '#4dd0e1', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【冰屬性】將 3 顆角色珠尺寸變大，消除 5 顆妨礙珠，並轉襲 6 顆冰珠。', 
     bgUrl: 'images/tia_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['配合得不錯，你很有狩獵的資質。', '瞄準目標，一口氣跨越吧！'], 
     endingText: '能跟你並肩作戰，真的會讓人打從心底感到無比安心。真希望我們那個少根筋的笨蛋頭領也能多跟你學著點，等這次回去之後，我一定要好好唸他一頓不可！' 
   },
   { id: 'arashiyama', name: '嵐山', element: '光屬性', color: '#4e342e', border: '#ffb74d', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【光屬性】破除全場幕盲珠，將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/arashiyama_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['等待是值得的，結果一定不會讓你失望。', '天空，終於要放晴了呢。'], 
     endingText: '無論在外頭經歷了多少狂風暴雨，屬於我們的溫暖羈絆，永遠都會在這裡靜靜守候。歡迎回家，快過來坐下，把這一路上的所有見聞與冒險故事都細細說給我聽聽吧。' 
   },
   { id: 'gorilla', name: '烈塵巡衛', element: '重力屬性', color: '#212121', border: '#ff5722', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【重力屬性】反轉重力 1 秒，將 3 顆角色珠尺寸變小，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/gorilla_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['別妨礙我，走開。', '還跟著啊？那這份包裹就交給你了。'], 
     endingText: '任務完成。雖然動作慢了點，但你方才展現出的實力我姑且算是認可了。至少……比起那隻羚羊，你還算個讓人安心的夥伴，期待下次任務再見。' 
   },
   { id: 'boar', name: '鍛魂獷牙', element: '火屬性', color: '#bf360c', border: '#ff7043', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【火屬性】消除 3 顆角色珠，將 3 顆角色珠尺寸變大，轉襲 2 顆超載珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/boar_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['想偷懶？沒那麼容易！', '淬鍊接近完成，火候正旺呢！'], 
     endingText: '這小子，手腳俐落、辦事效率還算挺像樣的嘛！我們砧鍛坊現在正缺你這種手藝靈光的人才，怎麼樣，有沒有興趣考慮來我這裡打工？我保證絕對會給你留個好位置喔！' 
   },
   { id: 'kaiden', name: '凱登', element: '水屬性', color: '#01579b', border: '#29b6f6', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【水屬性】將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，5 秒內消除每球 500 分，漂浮 2 秒並消除 5 顆妨礙珠！', 
     bgUrl: 'images/kaiden_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['水流衝擊勁道十足，簡單就被咱拿下了！', '乘風破浪，跟著咱的節奏走就對啦！'], 
     endingText: '痛快！這場共鳴簡直就像在大海深處搏浪衝擊一樣過癮！從今天起你就是「炙海獵者」的一員了！……咦？克爾那傢伙在旁邊瞪什麼瞪？別理他，我說了算！' 
   },
   { id: 'gousuke', name: '豪助', element: '無能力', color: '#37474f', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/gousuke_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['表現真好，和預期的一樣呢', '只差一點了，再努力一下就好！'], 
     endingText: '和你一邊並肩執行任務，心底總會湧上一股彷彿認識多年的熟悉感，莫名地令人安心。你果斷的執行力更讓我打從心底感到嚮往與佩服……真希望有一天，我也能像你一樣變得那麼優秀、那麼可靠。' 
   },
   { id: 'chitar', name: '瞬介', element: '風屬性', color: '#f57f17', border: '#fff176', 
-    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
     desc: '【風屬性】產生暴風 1.5 秒，將 3 顆角色珠尺寸變大，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/chitar_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['哈哈，這麼輕鬆就跑過去啦！', '輕而易舉，小菜一碟！'], 
     endingText: '太過癮了！像這樣毫無保留、隨心所欲地在風中放肆奔跑，果然就是最痛快淋漓的事！別停下來，這次我們目標可是要把銳步教授給狠狠甩在後頭！說好了，最後輸的人可是要掏腰包請客的喔！' 
   },
   { id: 'horse', name: '颯太', element: '無能力', color: '#4e342e', border: '#b0bec5',
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/horse_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['看吧，只要撐著就能過關！', '課題接踵而來，沉著以對就能突破！'], 
     endingText: '互相扶持、彼此幫忙，果然才是通往勝利最快的捷徑！今天真的非常謝謝你鼎力相助，這段並肩作戰的過程讓我安心不少……說好了，下次有機會我們還要再一起組隊挑戰更難的關卡喔！' 
   },
   { id: 'sinn', name: '泊信', element: '無能力', color: '#263238', border: '#90a4ae', 
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/sinn_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['由我帶隊，一起衝吧！', '目標就在前方，注意啦！'], 
     endingText: '真是一位潛力無窮、讓人眼睛一亮的新人啊！來，我們乾一杯慶祝一下，這杯直接算我請你的！接下來也得繼續加把勁，才能幫上普大哥的忙呢！' 
   },
   { id: 'whissel', name: '旭言', element: '無能力', color: '#f57f17', border: '#b0bec5',
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/whissel_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['等待是值得的，頭條新聞有著落了！', '取材順利，這篇報導一定能大紅大紫！'], 
     endingText: '幸虧有你一路從旁鼎力相助，我們才能成功捕捉到眼前這幕如此關鍵的決定性瞬間。放心吧，我會把這份獨家真相毫無保留地呈獻給全世界，明天的頭條版面絕對會讓所有人大開眼界！' 
   },
   { id: 'rin', name: '嶙安', element: '無能力', color: '#37474f', border: '#b0bec5',
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/rin_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['你真厲害，我……我有幫上忙嗎？', '真沒想到……原來我也可以做到！'], 
     endingText: '呼……呼……直到這裡，我從來都沒想過自己竟然也有辦法抵達這種不可思議的境界……謝謝你讓我看見了這片全然不同的壯闊世界，這份深刻的感動與現在的悸動，我一輩子都會永遠銘記在心！' 
   },
   { id: 'cat', name: '瑟莉雅', element: '無能力', color: '#546e7a', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/cat_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['和平的日子，總在不知不覺中消失……', '我好像明白了，這就是所謂的「期望」嗎？'], 
     endingText: '這場共鳴讓我終於明白人與人之間的羈絆，就是這樣在不知不覺中建立起來的。現在的我，已經擁有足夠的勇氣去面對五十嵐老師了，真的非常謝謝你陪著我走過這段艱難的旅程。' 
   },
   { id: 'reva', name: '雷瓦維那', element: '火屬性', color: '#1a237e', border: '#5c6bc0', 
-    type: 'none', roleType: '地脈操流者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '地脈操流者', reqLeader: 13, reqSupport: 15, 
     desc: '【火屬性】消除 3 顆角色珠，將 3 顆角色珠尺寸變大，轉襲 2 顆超載珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/reva_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['傾聽、感受、揮棒。', '看啊，這就是你的脈能啊！'], 
     endingText: '你的表現實在太令我驚艷了。接下來的日子裡，我們一定要一起加倍努力，深入探索並學習更多關於地脈的古老神祕知識……我相信以你的資質，未來的成就絕對會遠遠超越我這把老骨頭的！' 
   },
   { id: 'leon', name: '萊昂維那', element: '無能力', color: '#263238', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/leon_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['防衛戰術奏效，我們要確實保護大家！', '推進順利，威脅將被清除殆盡！'], 
     endingText: '今天又這樣平安無事地度過啦。多虧有你一路全力相挺、從旁協助，我們才能順利將維那嶺守護得滴水不漏。看著眼前的這份平靜，不知不覺讓我想起那支四處奔波、充滿回憶的「無盡元素」探索隊呢。' 
   },
   { id: 'igrahhan', name: '伊格拉罕', element: '冰屬性', color: '#37474f', border: '#00bcd4', 
-    type: 'none', roleType: '地脈操流者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '地脈操流者', reqLeader: 13, reqSupport: 15, 
     desc: '【冰屬性】將 3 顆角色珠尺寸變大，消除 5 顆妨礙珠，並轉襲 6 顆冰珠。', 
     bgUrl: 'images/igrahhan_bg.webp', isLandscape: true, 
     cleared: false, cheers: ['北原十分險峻的，小心為上。', '靠過來點，我的狼群會保護你的。'], 
     endingText: '瞧你這副模樣……看來你身上似乎隱藏著相當驚人的地脈操控潛力呢。怎麼樣，有興趣跟著我們一起在北園生活嗎？只要你點頭，白原行族的大門永遠隨時為你敞開，熱烈歡迎你的加入！' 
   },
   { id: 'touphrin', name: '塔芙琳', element: '土屬性', color: '#00838f', border: '#80deea', 
-    type: 'none', roleType: '地脈操流者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '地脈操流者', reqLeader: 13, reqSupport: 15, 
     desc: '【土屬性】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/touphrin_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['地脈導流非常順利，輕鬆過關！', '那邊，我們去那邊瞧瞧吧！'], 
     endingText: '太棒了！只要有你陪在身邊一起冒險，不管到哪裡都熱鬧得不得了，一點也感受不到枯燥乏味呢！怎麼樣，接下來我們要出發去哪邊探索才好呢？' 
   },
   { id: 'tormunn', name: '拓穆恩', element: '無能力', color: '#e65100', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/tormunn_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['趁有點空檔，讓我帶你逛逛吧！', '交易目標就在眼前，加把勁嚴守底線！'], 
     endingText: '多虧有你從旁鼎力協助，這場交易才能談得如此漂亮成功。像你這樣既有眼光又懂精打細算的商業人才實在難得，希望接下來的日子裡，我們還能繼續愉快地合作下去！' 
   },
   { id: 'grossa', name: '格洛薩', element: '無能力', color: '#212121', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
     desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/grossa_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['哼，這種局面只是小意思而已。', '機會來了，準備開牌大獲全勝吧！'], 
@@ -3067,8 +3068,8 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'kokumei':
-      showBanner('【混沌】轉襲 3 顆定時扣分吞噬珠， 10 秒落下的角色珠大小不定！');
-      for (let i = 0; i < 3; i++) {
+      showBanner('【混沌】轉襲 4 顆吞噬珠，並引發 10 秒混沌動態尺寸！');
+      for (let i = 0; i < 4; i++) {
         const targets = balls.filter(b => !b.isSpecialOrb && !b.isGreenBall);
         if (targets.length > 0) {
           const target = targets[Math.floor(Math.random() * targets.length)];
@@ -3078,16 +3079,15 @@ function triggerCharSkillEffect(charId) {
         }
       }
       
-      // 額外設定 15 秒內落下的珠子隨機大小交替
       window.kokumeiChaosEndTimer = performance.now() + 10000;
       break;
 
     case 'proto':
-      showBanner('【摧毀】落下 3 顆大黑質珠、2 顆小吞噬珠與引發地震波！');
-      // 3 顆大黑質珠
+      showBanner('【摧毀】落下 3 顆小黑質珠、2 顆小吞噬珠與引發地震波！');
+      // 3 顆小黑質珠
       for (let i = 0; i < 3; i++) {
         const bB = spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, true);
-        resizeBallBody(bB, BALL_RADIUS * 1.25);
+        resizeBallBody(bB, BALL_RADIUS * 0.65);
       }
       // 2 顆小吞噬珠 (isGreenBall = true)
       for (let i = 0; i < 2; i++) {
@@ -3106,11 +3106,14 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'volt':
-      showBanner('【寂滅】落下 6 顆小黑質珠，產生 1.5 秒重力牽引！');
-      for (let i = 0; i < 6; i++) {
+      showBanner('【寂滅】落下 4 顆大黑質珠，產生 1.5 秒重力牽引！');
+      for (let i = 0; i < 4; i++) {
         const bV = spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, true);
-        resizeBallBody(bV, BALL_RADIUS * 0.65);
+        resizeBallBody(bV, BALL_RADIUS * 1.25);
       }
+      blackHolePos = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT / 2 };
+      blackHoleTimer = 1.5;
+      break;
 
     case 'veil':
       showBanner('【魂命】轉襲 10 顆冰封珠、落下 2 顆超載珠，轉襲 2 顆黑質珠，盤面漂浮 2 秒！');
