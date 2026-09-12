@@ -2373,9 +2373,6 @@ document.getElementById('btn-use-barrier').onclick = () => {
 
 document.getElementById('btn-manual-drop').onclick = () => {
   playSynthPopSFX();
-  if (selectedVariant && selectedVariant.baseTarget && selectedVariant.goalType !== 'skillCount') {
-    // 透過比對挑戰分支 ID 或確認是否為第二種分支（以過載/分數+5000判定）
-  }
   if (selectedVariant && selectedVariant.baseTarget && selectedVariant.baseTarget > 42000) {
     showBanner('【挑戰加分】此挑戰無法使用流星火彈！');
     return;
@@ -2386,11 +2383,31 @@ document.getElementById('btn-manual-drop').onclick = () => {
   if (manualDropRemaining <= 0) {
     btnManualDropEl.disabled = true;
   }
+
+  // 1. 增加消除 3 顆妨礙珠的效果
+  removeRandomObstacles(3);
+
+  // 2. 獲取該局非妨礙賦形者的角色池（過濾掉 type === 'negative' 的角色）
+  const safePool = currentMatchChars.filter(c => c.type !== 'negative');
+  const fallbackChar = safePool.length > 0 ? safePool : currentMatchChars;
+
+  function getSafeRandomChar() {
+    const roll = Math.random();
+    if (roll < 0.35 && safePool.length > 0) return safePool[0];
+    if (roll < 0.60 && safePool.length > 1) return safePool[1];
+    if (roll < 0.80 && safePool.length > 2) return safePool[2];
+    return fallbackChar[Math.floor(Math.random() * fallbackChar.length)];
+  }
+
+  // 3. 落下 5 顆排除妨礙賦形者的珠子
   for (let i = 0; i < 5; i++) {
     const rx = Math.random() * (VIRTUAL_WIDTH - 80) + 40;
     const ry = -BALL_RADIUS - (i * 30);
-    spawnSingleBall(rx, ry);
+    const chosenChar = getSafeRandomChar();
+    spawnSingleBall(rx, ry, chosenChar);
   }
+
+  showBanner('【流星火彈】消除 3 顆妨礙珠，並落下五顆角色珠！');
 };
 
 setInterval(() => {
