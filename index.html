@@ -32,9 +32,8 @@
 
     #bg-dark-overlay {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
-      background: rgba(21, 19, 20, 0.45); opacity: 0; pointer-events: none;
+      background: rgba(21, 19, 20, 0.55); opacity: 0; pointer-events: none;
       transition: opacity 0.5s ease;
-      backdrop-filter: blur(2px);
     }
     #bg-dark-overlay.active { opacity: 1; }
 
@@ -79,12 +78,12 @@
     #top-hud {
       display: flex; justify-content: space-between; align-items: center;
       padding: calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px 12px;
-      background: rgba(21, 19, 20, 0.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      background: rgba(21, 19, 20, 0.92);
       color: #ede5d8; font-size: 11px; font-weight: bold; 
       border-bottom: 1px solid rgba(224, 123, 70, 0.35);
       box-shadow: 0 4px 20px rgba(0,0,0,0.6);
       z-index: 5;
-      white-space: nowrap; /* 防止文字換行跳動 */
+      white-space: nowrap;
     }
     .hud-bar { 
       width: 140px; height: 7px; 
@@ -1482,7 +1481,7 @@ async function initPixiEngine() {
     await pixiApp.init({
       backgroundAlpha: 0,
       resizeTo: containerEl,
-      antialias: true,
+      antialias: false,
       powerPreference: 'high-performance'
     });
     containerEl.appendChild(pixiApp.canvas);
@@ -3573,21 +3572,25 @@ function handleStageClear() {
     btnNextStage.disabled = true;
     btnCheerBack.disabled = true;
     
-    let countdown = 2;
+    let countdown = 1; // 顯示維持 1 秒
+    btnNextStage.disabled = true;
+    btnCheerBack.disabled = true;
     btnNextStage.innerText = `繼續推進 (${countdown}s)`;
     btnCheerBack.innerText = `返回首頁 (${countdown}s)`;
 
-    const countdownTimer = setInterval(() => {
-      countdown--;
-      if (countdown > 0) {
-        btnNextStage.innerText = `繼續推進 (${countdown}s)`;
-        btnCheerBack.innerText = `返回首頁 (${countdown}s)`;
-      } else {
-        clearInterval(countdownTimer);
-        btnNextStage.disabled = false;
-        btnCheerBack.disabled = false;
-        btnNextStage.innerText = '繼續推進';
-        btnCheerBack.innerText = '返回首頁';
+    // 實際鎖定 1.5 秒後解鎖
+    setTimeout(() => {
+      btnNextStage.disabled = false;
+      btnCheerBack.disabled = false;
+      btnNextStage.innerText = '繼續推進';
+      btnCheerBack.innerText = '返回首頁';
+    }, 1500);
+
+    // 1 秒後將按鈕上的文字轉為就緒
+    setTimeout(() => {
+      if (btnNextStage.disabled) {
+        btnNextStage.innerText = '繼續推進 (0s)';
+        btnCheerBack.innerText = '返回首頁 (0s)';
       }
     }, 1000);
 
@@ -3857,7 +3860,7 @@ function processBannerQueue() {
       isBannerShowing = false;
       processBannerQueue();
     }, 300);
-  }, 1000);
+  }, 1500);
 }
 
 function setDialogue(speaker, text) {
