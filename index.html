@@ -156,7 +156,7 @@
     .tracker-val { color: #ede5d8; font-size: 10px; font-weight: bold; min-width: 28px; }
 
     #active-effect-timer {
-      position: absolute; right: 8px; top: 270px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 4;
+      position: absolute; left: 8px; top: 12px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 4;
     }
 
     #btn-use-barrier {
@@ -571,7 +571,7 @@
 
     <div id="board-wrapper">
       <div id="top-action-bar">
-        <button id="btn-manual-drop" onclick="playSynthPopSFX()">流星火彈 (5)</button>
+        <button id="btn-manual-drop" onclick="playSynthPopSFX()">流星火彈 (3)</button>
         <button id="btn-use-barrier" onclick="playSynthPopSFX()">震巖流！ (1)</button>
       </div>
       <div id="side-trackers"></div>
@@ -2043,7 +2043,7 @@ function renderGuidePage() {
         <div style="font-weight:bold; color:#ff9800; margin-bottom:6px;">【亞爾克的協助技能】</div>
         <div style="font-size:11px; color:#ccc; margin-bottom:8px;">畫面右上角可隨時使用的救援手段：</div>
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
-          <button class="btn sub" style="pointer-events:none; font-size:10px; padding:4px 8px; flex-shrink:0;">流星火彈 (5)</button>
+          <button class="btn sub" style="pointer-events:none; font-size:10px; padding:4px 8px; flex-shrink:0;">流星火彈 (3)</button>
           <div style="font-size:11px;">額外落下五顆角色珠，並消除三顆妨礙珠。</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
@@ -2109,7 +2109,7 @@ function startStage(stage, shouldReshuffle = true) {
   isCastingSkill = false;
   currentScore = 0;
   currentStageSkillCount = 0;
-  manualDropRemaining = 5;
+  manualDropRemaining = 3;
   btnManualDropEl.innerText = `流星火彈 (${manualDropRemaining})`;
   
   // 第二種分支挑戰（挑戰：陪伴 / 成長等加分分支，此處以 id === 'overload' 或判定目標為主）
