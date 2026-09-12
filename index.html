@@ -1847,7 +1847,7 @@ function updateVariantDescText() {
     const s1 = selectedVariant.stageSkillTargets[0];
     const s2 = selectedVariant.stageSkillTargets[1];
     const s3 = selectedVariant.stageSkillTargets[2];
-    descEl.innerHTML = `<strong>${selectedLeader.name}・${selectedVariant.title}</strong><br><span style="color:#ffb74d;">【權能連鎖考驗】隊長發動需求 +2！各關目標：使用 ${s1} / ${s2} / ${s3} 次隊長技能<br>※ 本挑戰無法使用「震巖流」技能</span><br>${selectedLeader.desc}`;
+    descEl.innerHTML = `<strong>${selectedLeader.name}・${selectedVariant.title}</strong><br><span style="color:#ffb74d;">【權能連鎖考驗】隊長發動需求 +2！各關目標：使用 ${s1} / ${s2} / ${s3} 次隊長技能</span><br><span style="color:#ff5555;">※ 本挑戰無法使用「震巖流」技能</span><br>${selectedLeader.desc}`;
   } else {
     const vt1 = calculateStageTarget(1);
     const vt2 = calculateStageTarget(2);
