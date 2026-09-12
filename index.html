@@ -126,21 +126,21 @@
     }
       
     #top-action-bar {
-      position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: flex-end; align-items: center; z-index: 5;
+      position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; z-index: 5;
     }
-    #btn-manual-drop {
+    #btn-manual-drop, #btn-use-barrier {
       background: rgba(224, 123, 70, 0.25); border: 1.5px solid #e07b46; color: #ede5d8;
-      padding: 6px 14px; border-radius: 16px; font-size: 11px; font-weight: bold;
+      padding: 6px 12px; border-radius: 16px; font-size: 11px; font-weight: bold;
       backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); cursor: pointer;
       transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
       box-shadow: 0 0 15px rgba(224, 123, 70, 0.3);
     }
-    #btn-manual-drop:hover { box-shadow: 0 0 25px rgba(224, 123, 70, 0.6); transform: scale(1.05); color: #fff; }
-    #btn-manual-drop:active { transform: scale(0.92); }
-    #btn-manual-drop:disabled { opacity: 0.4; border-color: #555; color: #888; cursor: not-allowed; box-shadow: none; }
+    #btn-manual-drop:hover, #btn-use-barrier:hover { box-shadow: 0 0 25px rgba(224, 123, 70, 0.6); transform: scale(1.05); color: #fff; }
+    #btn-manual-drop:active, #btn-use-barrier:active { transform: scale(0.92); }
+    #btn-manual-drop:disabled, #btn-use-barrier:disabled { opacity: 0.4; border-color: #555; color: #888; cursor: not-allowed; box-shadow: none; }
 
     #side-trackers {
-      position: absolute; right: 8px; top: 52px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 4;
+      position: absolute; right: 8px; top: 96px; display: flex; flex-direction: column; gap: 6px; pointer-events: none; z-index: 4;
     }
     .tracker-node {
       display: flex; align-items: center; gap: 6px; 
@@ -150,12 +150,25 @@
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
-    .tracker-dot { width: 16px; height: 16px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+    .tracker-dot { 
+      width: 20px; height: 20px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 6px currentColor; flex-shrink: 0; background-size: cover; background-position: center;
+    }
     .tracker-val { color: #ede5d8; font-size: 10px; font-weight: bold; min-width: 28px; }
 
     #active-effect-timer {
-      position: absolute; right: 8px; top: 230px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 4;
+      position: absolute; right: 8px; top: 270px; display: flex; flex-direction: column; gap: 5px; pointer-events: none; z-index: 4;
     }
+
+    #btn-use-barrier {
+      background: rgba(224, 123, 70, 0.25); border: 1.5px solid #e07b46; color: #ede5d8;
+      padding: 6px 12px; border-radius: 16px; font-size: 11px; font-weight: bold;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+      box-shadow: 0 0 15px rgba(224, 123, 70, 0.3);
+    }
+    #btn-use-barrier:hover { box-shadow: 0 0 25px rgba(224, 123, 70, 0.6); transform: scale(1.05); color: #fff; }
+    #btn-use-barrier:active { transform: scale(0.92); }
+    #btn-use-barrier:disabled { opacity: 0.4; border-color: #555; color: #888; cursor: not-allowed; box-shadow: none; }
     .effect-timer-node {
       display: flex; align-items: center; justify-content: space-between; gap: 10px; 
       background: rgba(201, 101, 50, 0.9);
@@ -403,7 +416,7 @@
 
     #modal-gallery { z-index: 35; }
     .gallery-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0; max-height: 320px; overflow-y: auto;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0; max-height: 320px; overflow-y: auto;
     }
     .gallery-card {
       background: rgba(25, 21, 21, 0.92); border: 1px solid rgba(237, 229, 216, 0.15); border-radius: 10px; padding: 10px;
@@ -492,6 +505,13 @@
       visibility: hidden !important;
       pointer-events: none !important;
     }
+    .btn.sub:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      border-color: #444;
+      color: #777;
+    }
+    
   </style>
 </head>
 <body id="app-body">
@@ -536,22 +556,23 @@
     </div>
 
     <div id="top-hud">
-      <div style="display: flex; flex-direction: column; gap: 3px;">
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span id="stage-badge" class="hud-stage">Stage 1/3</span>
-          <span id="target-desc-label" style="font-size: 11px; color: #ccc;">目標: <span id="score-text">0</span> / <span id="target-score">42000</span></span>
-        </div>
-        <div class="hud-bar"><div id="score-progress" class="hud-progress"></div></div>
+    <div style="display: flex; flex-direction: column; gap: 3px; flex: 1;">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span id="stage-badge" class="hud-stage">Stage 1/3</span>
+        <span id="target-desc-label" style="font-size: 11px; color: #ccc;">目標: <span id="score-text">0</span> / <span id="target-score">42000</span></span>
       </div>
-      <div class="hud-timer" id="timer-text">03:00</div>
-      <div style="display: flex; gap: 6px; align-items: center;">
-        <button class="btn-icon" id="btn-open-quit" onclick="playSynthPopSFX()">放棄</button>
-      </div>
+      <div class="hud-bar"><div id="score-progress" class="hud-progress"></div></div>
     </div>
+    <div class="hud-timer" id="timer-text" style="position: absolute; left: 50%; transform: translateX(-50%);">03:00</div>
+    <div style="display: flex; gap: 6px; align-items: center; flex: 1; justify-content: flex-end;">
+      <button class="btn-icon" id="btn-open-quit" onclick="playSynthPopSFX()">選單</button>
+    </div>
+  </div>
 
     <div id="board-wrapper">
       <div id="top-action-bar">
-        <button id="btn-manual-drop" onclick="playSynthPopSFX()">+ 補給落球 (5)</button>
+        <button id="btn-manual-drop" onclick="playSynthPopSFX()">流星火彈 (5)</button>
+        <button id="btn-use-barrier" onclick="playSynthPopSFX()">震巖流！ (1)</button>
       </div>
       <div id="side-trackers"></div>
       <div id="active-effect-timer"></div>
@@ -569,7 +590,6 @@
     <div id="modal-select-leader" class="overlay-modal" style="display: none;">
       <div class="modal-card">
         <h3>選擇同行隊長</h3>
-        <p style="font-size: 11px; color: #aaa; margin-top: 3px;">共 50 位夥伴可選擇</p>
         <div class="leader-grid" id="leader-list"></div>
           
         <div id="variant-box" style="display: none;">
@@ -617,9 +637,27 @@
       <div class="modal-card" style="max-width: 280px;">
         <h3>中斷共鳴？</h3>
         <p style="font-size: 12px; color: #ccc; margin: 12px 0;">確定要放棄本局並返回主選單嗎？</p>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-          <button class="btn sub" id="btn-quit-cancel" onclick="playSynthPopSFX()">繼續戰鬥</button>
+        <div style="display: flex; flex-direction: column; gap: 8px; justify-content: center;">
+          <button class="btn sub" id="btn-quit-cancel" onclick="playSynthPopSFX()">繼續共鳴</button>
+          <button class="btn sub" id="btn-open-guide-in-game" onclick="playSynthPopSFX()">查看說明</button>
           <button class="btn danger" id="btn-quit-confirm" onclick="playSynthPopSFX()">確認返回</button>
+        </div>
+      </div>
+    </div>
+
+<div id="modal-game-guide" class="overlay-modal" style="display: none;">
+      <div class="modal-card" style="max-width: 360px;">
+        <h3 id="guide-title" style="color: #ff9800; margin-bottom: 8px;">共鳴指南</h3>
+        <div id="guide-content-box" style="font-size: 12px; color: #ddd; min-height: 220px; text-align: left; background: rgba(18, 24, 32, 0.85); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); line-height: 1.6;">
+          <!-- 動態載入分頁內容 -->
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px;">
+          <button class="btn sub" id="guide-prev-btn" onclick="playSynthPopSFX()" style="padding: 6px 14px; font-size: 11px;">上一頁</button>
+          <span id="guide-page-indicator" style="font-size: 11px; color: #aaa;">1 / 5</span>
+          <button class="btn sub" id="guide-next-btn" onclick="playSynthPopSFX()" style="padding: 6px 14px; font-size: 11px;">下一頁</button>
+        </div>
+        <div style="margin-top: 12px;">
+          <button class="btn" id="guide-action-btn" style="width: 100%; margin-top: 0;" onclick="playSynthPopSFX()">選擇隊長</button>
         </div>
       </div>
     </div>
@@ -628,7 +666,7 @@
       <div class="modal-card">
         <h2 id="result-title">達成共鳴！</h2>
         <div id="result-rank-badge" style="font-size: 48px; font-weight: 900; color: #ffd700; text-shadow: 0 0 20px rgba(255,215,0,0.6); margin: 10px 0;">S</div>
-        <div id="result-cg-tag" style="font-size: 11px; color: #ffeb3b; margin: 4px 0; display: none;">【解鎖分支結局圖！】</div>
+        <div id="result-cg-tag" style="font-size: 11px; color: #ffeb3b; margin: 4px 0; display: none;">【解鎖分支結局！】</div>
         <p id="result-detail" style="font-size: 12px; color: #ddd; margin: 10px 0;"></p>
         <button class="btn gold" id="btn-proceed-to-cg" style="margin-top: 14px;" onclick="playSynthPopSFX()">進入結局賞析</button>
       </div>
@@ -637,7 +675,7 @@
     <div id="modal-gallery" class="overlay-modal" style="display: none;">
       <div class="modal-card" style="max-width: 380px;">
         <h3>回憶畫廊</h3>
-        <p style="font-size: 11px; color: #aaa; margin-top: 2px;">已解鎖的插圖及專屬語錄</p>
+        <p style="font-size: 11px; color: #aaa; margin-top: 2px;">已解鎖的結局及專屬語錄</p>
         <div class="gallery-grid" id="gallery-container"></div>
         <button class="btn sub" id="btn-close-gallery" style="margin-top: 10px;" onclick="playSynthPopSFX()">返回首頁</button>
       </div>
@@ -861,8 +899,8 @@ setGlobalBackground('images/background.webp', false, false);
 const CHARACTER_DATABASE = [
   {
     id: 'kulu', name: '克爾', element: '融元素', color: '#1a3b5c', border: '#ff3333',
-    type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
-    desc: '【理解】建立意識流連結消除 8 顆角色珠，並消除 3 個妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【理解】建立意識流連結消除 8 顆角色珠，並消除 3 顆妨礙珠。',
     bgUrl: 'images/kulu_bg.webp', isLandscape: true,
     cheers: ['手感不錯嘛。別鬆懈，跟著我一口氣衝上去！', '搞定，我們一起突破最後的挑戰吧！'],
     variants: [
@@ -881,8 +919,8 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'arc', name: '亞爾克', element: '震元素', color: '#b26a00', border: '#ffb300',
-    type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
-    desc: '【震動】引發地震波消除 8 顆角色珠，並消除 3 個妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【震動】引發地震波消除 8 顆角色珠，並消除 3 顆妨礙珠。',
     bgUrl: 'images/arc_bg.webp', isLandscape: true,
     cheers: ['太好了！這段共鳴的節奏非常棒！調整好呼吸，下一階段也要好好幫我喔！', '進入最後關頭了！我要和你一起拿下完勝！'],
     endingText: '與你共鳴的感覺太棒了！謝謝你一直陪伴著我，下次有機會也要和我一起跑馬拉松喔，不見不散！',
@@ -902,7 +940,7 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'roar', name: '洛爾', element: '零元素', color: '#0277bd', border: '#29b6f6',
-    type: 'positive', roleType: '賦形者', reqLeader: 18, reqSupport: 22,
+    type: 'positive', roleType: '賦形者', reqLeader: 24, reqSupport: 32,
     desc: '【回歸】消除所有妨礙珠，並降下 5 顆延時珠。',
     bgUrl: 'images/roar_bg.webp', isLandscape: true,
     cheers: ['狀態正好，保持這股勁頭往前推！', '繼續努力，最後一戰要打得漂亮點！'],
@@ -910,8 +948,8 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'takawa', name: '高和', element: '恆元素', color: '#1565c0', border: '#42a5f5',
-    type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
-    desc: '【恆定】封印妨礙賦形者的能力發動 10 秒，並消除 5 顆妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【恆定】免疫妨礙效果發動 8 秒，並消除 5 顆妨礙珠。',
     bgUrl: 'images/takawa_bg.webp', isLandscape: true,
     cheers: ['波次一的數據已記錄完畢，繼續前進。', '波次二解析完成，我們要好好把握機會深入調查！'],
     endingText: '調查完了，接下來要不要和我一起到聚學舍聽講座呢？去圖書館也是可以的喔！不然……我們一起去找五十嵐老師怎麼樣？我想他應該會很樂意的。',
@@ -926,8 +964,8 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'koushou', name: '高翔', element: '極元素', color: '#c2185b', border: '#f06292',
-    type: 'positive', roleType: '賦形者', reqLeader: 18, reqSupport: 22,
-    desc: '【極限】將妨礙珠轉化為角色珠，轉化 5 顆金珠，並消除 5 個妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 24, reqSupport: 32,
+    desc: '【極限】將妨礙珠轉襲為萬配珠，並轉襲 5 顆黃金珠。',
     bgUrl: 'images/koushou_bg.webp', isLandscape: true,
     cheers: ['哈哈！比起死板的課堂，這種實戰真讓人熱血沸騰！', '搞定，感覺身體完全活動開了呢！'],
     endingText: '這場共鳴太過癮了！下次要不要跟我一起到尼爾桑的大森林去野營啊？我知道很多好地點喔！要不要也找克明一起去呢？',
@@ -948,23 +986,23 @@ const CHARACTER_DATABASE = [
   {
     id: 'kokumei', name: '克明', element: '沌元素', color: '#263238', border: '#78909c',
     type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【混沌】落下 3 顆綠珠（每 3 秒扣 100 分）。',
+    desc: '【混沌】轉襲 3 顆吞噬珠（每 3 秒扣 100 分），15 秒內落下的角色珠大小不定。',
     bgUrl: 'images/kokumei_bg.webp', isLandscape: true,
     cheers: ['局勢正按照預期的方向推進，沌元素的反噬也在可控範圍內。', '順利跨越第二階段，但直到最後一刻都不能鬆懈！'],
     endingText: '不論是我哥哥還是高翔，他們都擔心我過頭了啦！這次共鳴的結果不就證明我有能力掌控全局了嗎？謝謝你的幫忙，願狼神保佑你。'
   },
   {
     id: 'igarashi', name: '五十嵐', element: '嵐元素', color: '#00838f', border: '#26c6da',
-    type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
-    desc: '【氣候】產生暴風 5 秒，連鎖引爆 8 顆珠子，並消除 3 個妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【氣候】產生暴風 1 秒，連鎖引爆 8 顆珠子，並消除 3 個妨礙珠。',
     bgUrl: 'images/igarashi_bg.webp', isLandscape: true,
     cheers: ['很好，你的行動沒有絲毫慌亂，基本功很紮實。', '第二波也跨過去了，看著你們成長真是一大欣慰。'],
     endingText: '共鳴的結果已證明你具備展翅翱翔的氣量，為師由衷為你感到自豪。作為慶祝，我們一起去偷吃瓦奇瑪的甜點如何？放心，不會被發現的。'
   },
   {
     id: 'area', name: '艾瑞爾', element: '斷元素', color: '#37474f', border: '#eceff1',
-    type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
-    desc: '【斷裂】先重力反轉 1 秒，再左右重力牽引 1 秒，並消除 3 個妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【斷裂】先重力反轉 1 秒，再左右重力牽引 1 秒，落下 5 顆萬配珠，並消除 3 個妨礙珠。',
     bgUrl: 'images/area_bg.webp', isLandscape: true,
     cheers: ['嘿，這不過小事一樁罷了。', '簡單！我會撕裂所有阻礙的！'],
     endingText: '我是自奈落而來的的黑夜魔君，你也快想個稱號，我們和瓦奇瑪一起並列艾瑞爾軍三巨頭如何？羅菲娜一定會看傻眼的！',
@@ -979,23 +1017,31 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'wakima', name: '瓦奇瑪', element: '位元素', color: '#00897b', border: '#80deea',
-    type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
-    desc: '【權位】降下 5 顆金珠，啟動 1 秒引力後漂浮 2 秒，並消除 5 個妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【權位】轉襲 5 顆金珠與 5 顆萬配珠，啟動 1 秒引力後漂浮 2 秒，並消除 5 個妨礙珠。',
     bgUrl: 'images/wakima_bg.webp', isLandscape: true,
     cheers: ['第一關輕鬆搞定，還不感謝本大明神的庇佑啊！', '第二階段也過啦！等這場打完我要吃好多布丁犒賞自己！'],
     endingText: '哈哈，共鳴大成功！本大明神正式冊封你為頭號信徒，特許你天天都有吃不完的甜點！不過說好了，收到的甜食全都得拿來供奉本人我才行！'
   },
   { id: 'rofena', name: '羅菲娜', element: '土屬性', color: '#bf360c', border: '#ff7043', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【土屬性】引發地震波，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【土屬性】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/rofena_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['政法條理清晰無誤，第一階段完美得分！', '第二階段也很順利，情勢全在預料之中！'], 
     endingText: '不愧是我的同行者，真是精采絕倫的表現！記得每天晚上都要準時收看我的直播喔！菲羅放送等著你的到來！'
   },
   {
+    id: 'volt', name: '弗爾特', element: '滅元素', color: '#4a148c', border: '#ab47bc',
+    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
+    desc: '【寂滅】落下 6 顆小黑質珠，產生 1.5 秒重力牽引。',
+    bgUrl: 'images/volt_bg.webp', isLandscape: true,
+    cheers: ['雜訊已被徹底湮滅，繼續執行清除作業。', '已敵人確認瓦解，誰也別想在我的領域裡耍花招。'],
+    endingText: '哼，你的應對能力超出了我原本的預期，比那個普洛特有用多了。這場共鳴真是印象深刻，但我還得去忙，剩下的就交給五十九號映像者陪你吧。'
+  },
+  {
     id: 'proto', name: '普洛特', element: '毀元素', color: '#d84315', border: '#ff8a65',
     type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【摧毀】落下 4 顆重力黑球與引發地震波。',
+    desc: '【摧毀】落下 3 顆大黑質珠、2 顆小吞噬珠與引發地震波。',
     bgUrl: 'images/proto_bg.webp', isLandscape: true,
     cheers: ['這點阻礙不算什麼！拿出魄力就能一口氣砸開它！', '第二階段也粉碎啦，輕鬆簡單！'],
     endingText: '我的得力助手，跟你一塊並肩作戰的感覺實在是痛快極了。怎麼樣，要不要考慮加入我們新生詛碼團一起大展身手？要是你也來了，泊信那傢伙肯定也會高興得不得了！',
@@ -1009,17 +1055,9 @@ const CHARACTER_DATABASE = [
     ]
   },
   {
-    id: 'volt', name: '弗爾特', element: '滅元素', color: '#4a148c', border: '#ab47bc',
-    type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【寂滅】落下 4 顆重力黑球，引發 1.5 秒重力牽引。',
-    bgUrl: 'images/volt_bg.webp', isLandscape: true,
-    cheers: ['雜訊已被徹底湮滅，繼續執行清除作業。', '已敵人確認瓦解，誰也別想在我的領域裡耍花招。'],
-    endingText: '哼，你的應對能力超出了我原本的預期，比那個普洛特有用多了。這場共鳴真是印象深刻，但我還得去忙，剩下的就交給五十九號映像者陪你吧。'
-  },
-  {
     id: 'veil', name: '白珥', element: '命元素', color: '#880e4f', border: '#ec407a',
     type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【魂命】凍結 10 顆冰珠、落下 2 顆過熱自爆珠，將 2 顆場面珠轉為黑珠，盤面漂浮 2 秒。',
+    desc: '【魂命】轉襲 10 顆冰封珠、轉襲 2 顆黑質珠、落下 2 顆超載珠，盤面漂浮 2 秒。',
     bgUrl: 'images/veil_bg.webp', isLandscape: true,
     cheers: ['一場賞心悅目的初戰。', '第二階段也結束了，局勢正按照推演鋪展開來……'],
     endingText: '不負所望的完美結果。這簡直是一場無可挑剔的華麗謝幕，我很期待在不久的將來，還能有機會與你再度同台共演。'
@@ -1027,22 +1065,22 @@ const CHARACTER_DATABASE = [
   {
     id: 'zoma', name: '詛碼', element: '究極元素', color: '#311b92', border: '#7e57c2',
     type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【侵染】落下 3 顆重力黑球、2 顆自爆珠，並引發 2 秒引力黑洞。',
+    desc: '【侵染】轉襲 3 顆黑質珠、落下 2 顆超載珠，並引發 2 秒引力黑洞。',
     bgUrl: 'images/zoma_bg.webp', isLandscape: true,
     cheers: ['節奏優雅，第一幕如預期般落幕。', '第二階段應聲瓦解。在我的美學面前，阻礙終究只是點綴雲煙。'],
     endingText: '這場共鳴所迸發出的張力與震撼感，實在讓人永生難忘。來吧，接受這份究極的榮光吧，這絕對是你值得引以為傲的輝煌成就！'
   },
   {
     id: 'ultima', name: '阿爾提瑪', element: '闇屬性', color: '#2b1055', border: '#a855f7',
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9,
-    desc: '【闇屬性】使 10 顆角色珠變成盲珠，並消除 5 顆妨礙珠。',
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17,
+    desc: '【闇屬性】轉襲 15 顆幕盲珠，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。',
     bgUrl: 'images/ultima_bg.webp', isLandscape: true,
     cheers: ['第一階段只有這點程度嗎？完全不夠看啊。', '第二階段也毫無困難，真是有些失望呢。'],
     endingText: '究極的力量果然非同凡響，這場共鳴的完美結果，正是你擁有掌控全局能力的最佳證明。加入詛碼團吧，我們非常需要像你這樣實力堅強的夥伴！'
   },
   {
     id: 'lanlan', name: '嵐懶', element: '無名元素', color: '#e65100', border: '#ff9800',
-    type: 'positive', roleType: '賦形者', reqLeader: 26, reqSupport: 30,
+    type: 'positive', roleType: '賦形者', reqLeader: 28, reqSupport: 36,
     desc: '【重生】盤面洗版重置，啟動 1 秒漂浮狀態，並消除 3 個妨礙珠！',
     bgUrl: 'images/lanlan_bg.webp', isLandscape: true,
     cheers: ['呼……過了嗎？好耶，那我可以回去睡覺了嗎？', '與夥伴的連結很穩定呢，最後一哩路，我們一口氣衝過門檻！'],
@@ -1050,16 +1088,16 @@ const CHARACTER_DATABASE = [
   },
   {
     id: 'zarion', name: '澤里恩', element: '耀元素', color: '#546e7a', border: '#ffa726',
-    type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
-    desc: '【成長】8 秒內落下的角色珠尺寸放大，隨機變大 10 顆角色珠，並消除 5 個妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【成長】8 秒內落下的角色珠尺寸放大，變大盤面 10 顆角色珠與轉襲 5 顆萬配珠，並消除 5 個妨礙珠。',
     bgUrl: 'images/zarion_bg.webp', isLandscape: true,
     cheers: ['太好了……第一階段順利通過了！我有幫上忙，對吧？', '第二階段也達成了！這一次我絕對不會停止閃耀！'],
     endingText: '太好了……我們真的做到了！一路上多虧有你一直陪在這樣的我身邊，給了我無盡的勇氣與安心感。所以……答應我，我們要永遠在一起喔！'
   },
   {
     id: 'jareth', name: '賈瑞斯', element: '創元素', color: '#ff6f00', border: '#ffb300',
-    type: 'positive', roleType: '賦形者', reqLeader: 26, reqSupport: 30,
-    desc: '【創生】盤面洗版重置，並引發 1 秒引力黑洞，並消除 3 個妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 28, reqSupport: 36,
+    desc: '【創生】盤面洗版重置，引發 1 秒元素漩渦，並轉襲 3 顆黃金珠。',
     bgUrl: 'images/jareth_bg.webp', isLandscape: true,
     cheers: ['哦？手感挺俐落嘛！', '保持幹勁，一口氣衝過去吧！'],
     endingText: '幹得漂亮！真沒想到你在賦形這方面也有一套！走吧走吧，一起去夜市把所有攤位的小吃全部橫掃一遍！不過先說好，千萬別找五十嵐來喔！',
@@ -1075,7 +1113,7 @@ const CHARACTER_DATABASE = [
   {
     id: 'kuzure', name: '崩', element: '崩元素', color: '#3e2723', border: '#8d6e63',
     type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【崩壞】生成 4 顆黑珠，重力反轉 0.5 秒並引發震波。',
+    desc: '【崩壞】引發地震波，並轉襲 4 顆大尺寸黑質珠。',
     bgUrl: 'images/kuzure_bg.webp', isLandscape: true,
     cheers: ['哼，第一段打得還算說得過去！', '突破第二階段，都是有我的鐵拳開路！'],
     endingText: '完勝！只要脖子上繫著這條紅色圍巾，我這雙拳頭就會為了彼此的約定與承諾，毫無保留地揮舞到最後一刻！你心裡也有非完成不可的事嗎？那就別猶豫了，讓我們一起放手大幹一場吧！',
@@ -1091,7 +1129,7 @@ const CHARACTER_DATABASE = [
   {
     id: 'osae', name: '制', element: '制元素', color: '#827717', border: '#c0ca33',
     type: 'negative', roleType: '賦形者', reqLeader: 12, reqSupport: 13,
-    desc: '【壓制】8 秒內掉落小珠，縮小 15 顆珠子，落下 1 綠、2 黑、1 自爆、1 冰珠。',
+    desc: '【壓制】8 秒內落下的角色珠尺寸變小，縮小 15 顆角色珠，落下 1 吞噬珠、2 黑質珠、1 超載珠、1 冰封珠。',
     bgUrl: 'images/osae_bg.webp', isLandscape: true,
     cheers: ['嘿嘿！動力引擎轉速正常！', '快點結束吧，我的寶貝正在等我呢！'],
     endingText: '跟你搭檔的感覺太痛快啦！接著你想搭乘無垠號和我一起兜個風，還是陪我一起發明新東西呢？不管哪個都很有趣喔！'
@@ -1099,7 +1137,7 @@ const CHARACTER_DATABASE = [
   {
     id: 'kage', name: '影', element: '影元素', color: '#212121', border: '#9e9e9e',
     type: 'negative', roleType: '賦形者', reqLeader: 11, reqSupport: 12,
-    desc: '【變質】將全場角色珠化為黑幕盲珠。',
+    desc: '【變質】將全場角色珠化為幕盲珠。',
     bgUrl: 'images/kage_bg.webp', isLandscape: true,
     cheers: ['節拍很準嘛，暖場手感很到位喔。', '第二階段也過關了，讓派對徹底嗨起來吧！'],
     endingText: '拿去，我可是很難得替粉絲簽名的喔。夜晚還長得很，接著要不要一起去夜店晃一晃啊？我想你一定會喜歡的。'
@@ -1107,7 +1145,7 @@ const CHARACTER_DATABASE = [
   {
     id: 'rub', name: '劫', element: '劫元素', color: '#1a237e', border: '#5c6bc0',
     type: 'negative', roleType: '賦形者', reqLeader: 13, reqSupport: 14,
-    desc: '【奪取】6 秒內權能無效化，生成 3 顆 10 秒倒數炸彈與 2 黑珠。',
+    desc: '【奪取】6 秒內權能無效化，落下 3 顆超載珠與 2 顆黑質珠。',
     bgUrl: 'images/rub_bg.webp', isLandscape: true,
     cheers: ['哼，這點程度不過是理所應當的。', '快了，就都快是我的了！'],
     endingText: '把所有失去的榮耀親手奪回來……這是我當初立下的誓約。你展現出了能與我並肩的實力，誓奪爪盟歡迎你的到來。',
@@ -1121,201 +1159,201 @@ const CHARACTER_DATABASE = [
     ]
   },
   { id: 'electric', name: '伊蕾琪', element: '雷屬性', color: '#f57f17', border: '#ffee58', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【雷屬性】轉化 3 顆角色珠為金珠，變大 3 顆珠子，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【雷屬性】轉襲 3 顆黃金珠、將 3 顆角色珠尺寸變小、轉襲 2 顆吞噬珠，並消除 5 顆妨礙珠！', 
     bgUrl: 'images/electric_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['直播間點讚數破表啦！留言回到手軟呢～', '輕鬆通關，蕾寶的表現完美無瑕！'], 
     endingText: '各位蕾寶們，你們都看到了嗎？今天這場無懈可擊的完美勝利，可是由我和你一起聯手創造的呢～怎麼樣，要不要今晚一起去吃頓大餐，好好當作今天的慶功宴啊？' 
   },
   {
     id: 'raku', name: '埒', element: '埒元素', color: '#1b5e20', border: '#66bb6a',
-    type: 'positive', roleType: '賦形者', reqLeader: 12, reqSupport: 16,
-    desc: '【躍離】變大 10 顆、變小 10 顆珠子，將 5 顆珠子變金珠，並消除 5 妨礙珠。',
+    type: 'positive', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【躍離】變大 10 顆、變小 10 顆珠子，轉襲 5 顆黃金珠與 5 顆萬配珠，並消除 5 妨礙珠。',
     bgUrl: 'images/raku_bg.webp', isLandscape: true,
     cheers: ['約定好了，我們要一起拚到最後喔！', '這趟旅途十分漫長，但總有盡頭的。'],
     endingText: '只要心中懷抱著堅定的信念，即便穿梭於無數重疊的時空之中，那份深刻的羈絆也總會指引著我們再次相遇——而你此時此刻的到來，正是這一切最好的證明。'
   },
   {
     id: 'garoz', name: '犺', element: '犺元素', color: '#424242', border: '#9e9e9e',
-    type: 'negative', roleType: '賦形者', reqLeader: 14, reqSupport: 18,
-    desc: '【鎔鑄】連鎖引爆 8 顆珠子，並消除 3 個妨礙珠。',
+    type: 'negative', roleType: '賦形者', reqLeader: 15, reqSupport: 18,
+    desc: '【鎔鑄】連鎖引爆 8 顆角色珠，轉襲 2 顆超載珠，並消除 3 個妨礙珠。',
     bgUrl: 'images/garoz_bg.webp', isLandscape: true,
     cheers: ['交給我就好，我選的路不必旁人置喙。', '不陪我也沒關係，我會自己前進的。'],
     endingText: '哼，真沒想到你竟然能一路跟到這裡來，看在這分上，我姑且承認你的執著確實有點本事。不過接下來要面對的可是一條凶險無比的漫長險路，你……真的還有辦法跟上來嗎？'
   },
   { id: 'sugar', name: '霜糖紗母', element: '火屬性', color: '#f06292', border: '#f8bbd0', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【火屬性】消除 3 顆角色珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【火屬性】消除 3 顆角色珠，將 3 顆角色珠尺寸變大，轉襲 2 顆超載珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/sugar_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['烘焙的火候剛剛好，完美出爐！', '香氣已經散開囉，等等就能好好品嘗了！'], 
     endingText: '香噴噴的現烤麵包剛出爐囉，趕快趁熱嚐嚐味道怎樣！今天真的非常謝謝你抽空來陪我，這份特製的焦糖蜜匣，就讓你當作伴手禮帶回去好好享用吧！' 
   },
   { id: 'owl', name: '夜瞳梟賢', element: '風屬性', color: '#37474f', border: '#78909c', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【風屬性】自底部引發氣流 1.5 秒，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【風屬性】產生暴風 1.5 秒，將 3 顆角色珠尺寸變大，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/owl_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['生命跡象穩定，第一階段完美急救完成。', '第二階段清創完成，氣流與節奏都在掌握之中。'], 
     endingText: '共鳴和外科手術其實沒兩樣，冷靜與果斷都是不可或缺的關鍵技能。這次的期中考你已經漂亮地通過了，接下來的期末考也得繼續保持這股氣勢，加油喔！' 
   },
   { id: 'doutou', name: '怒濤銳步', element: '風屬性', color: '#e65100', border: '#ff9800', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【風屬性】自底部引發氣流 1.5 秒，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【風屬性】產生暴風 1.5 秒，將 3 顆角色珠尺寸變大，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/doutou_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['疾速如風，輕鬆甩開對手！', '追得上我嗎？前方路還遠著呢！'], 
     endingText: '速度挺快的嘛！怎麼樣，明天起要不要考慮加入我們田徑社的晨跑行列？有膽的話就繼續試著在跑道上追趕我吧，我保證，你很快就會無可救藥地愛上這種迎風狂奔、追著我的感覺……' 
   },
   { id: 'deer', name: '繪靈鹿茲', element: '水屬性', color: '#00796b', border: '#4db6ac', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【水屬性】 5 秒內消除的每球可獲得 500 分，漂浮 2 秒，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【水屬性】 將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，5 秒內消除每球 500 分，漂浮 2 秒並消除 5 顆妨礙珠！', 
     bgUrl: 'images/deer_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['想法狂湧而出，我有傑作的靈感啦！', '這個線索擺到這裏的話……居然是新的挑戰難關呢！'], 
     endingText: '只要有你這位頂尖得力助手的全力協助，這世上就沒有我繪靈鹿茲解不開的謎題！走吧，接下來我們要一起去挑戰更加離奇神祕的重大案件喔！' 
   },
   { id: 'teiner', name: '翠芽泰納', element: '土屬性', color: '#33691e', border: '#8bc34a', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【土屬性】引發地震波，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【土屬性】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/teiner_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['黑土滋壤、綠意萌芽！', '只要交給我，即便是荒地也能開出勝利的花朵！'], 
     endingText: '瞧瞧這片土地，枯萎的絕境裡終於迎來了復甦的契機，而這一切全都是你傾盡全力付出的成果！接下來就讓我們並肩攜手，讓它永遠充滿生機與綠意吧！' 
   },
   { id: 'fox', name: '睿策樺霖', element: '光屬性', color: '#e65100', border: '#ffb74d', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【光屬性】破除全場黑幕盲珠，變大 3 顆珠子，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【光屬性】破除全場幕盲珠，將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/fox_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['只要掌握學識，就能邁向未來！', '表現不錯，繼續保持下去喔。'], 
     endingText: '你是一個非常有潛力、資質極佳的好學生，我相信等你順利畢業之後，未來一定能成為本校引以為傲的傑出校友，甚至有機會獲頒專屬的殊榮稱號呢！' 
   },
   { id: 'racoon', name: '影識秘爪', element: '闇屬性', color: '#4e342e', border: '#9c27b0', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【闇屬性】讓 10 顆變盲珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【闇屬性】轉襲 15 顆幕盲珠，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/racoon_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['快了，快能夠揭開真相了。', '就在前面，真相就在那裡。'], 
     endingText: '歷史的紀錄與世人的評價，向來是由觀察者所定義的，而你今天的表現，無疑在其中寫下了最為璀璨的一頁。放心吧，這份珍貴的紀錄我會親自收錄，並負責在學識之庫中永遠保存下去。' 
   },
   { id: 'tia', name: '緹婭', element: '冰屬性', color: '#006064', border: '#4dd0e1', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【冰屬性】消除 5 顆妨礙珠，再生成 5 顆冰珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【冰屬性】將 3 顆角色珠尺寸變大，消除 5 顆妨礙珠，並轉襲 6 顆冰珠。', 
     bgUrl: 'images/tia_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['配合得不錯，你很有狩獵的資質。', '瞄準目標，一口氣跨越吧！'], 
     endingText: '能跟你並肩作戰，真的會讓人打從心底感到無比安心。真希望我們那個少根筋的笨蛋頭領也能多跟你學著點，等這次回去之後，我一定要好好唸他一頓不可！' 
   },
   { id: 'arashiyama', name: '嵐山', element: '光屬性', color: '#4e342e', border: '#ffb74d', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【光屬性】破除全場黑幕盲珠，變大 3 顆珠子，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【光屬性】破除全場幕盲珠，將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/arashiyama_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['等待是值得的，結果一定不會讓你失望。', '天空，終於要放晴了呢。'], 
     endingText: '無論在外頭經歷了多少狂風暴雨，屬於我們的溫暖羈絆，永遠都會在這裡靜靜守候。歡迎回家，快過來坐下，把這一路上的所有見聞與冒險故事都細細說給我聽聽吧。' 
   },
   { id: 'gorilla', name: '烈塵巡衛', element: '重力屬性', color: '#212121', border: '#ff5722', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【重力屬性】重力反轉 1 秒，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【重力屬性】反轉重力 1 秒，將 3 顆角色珠尺寸變小，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/gorilla_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['別妨礙我，走開。', '還跟著啊？那這份包裹就交給你了。'], 
     endingText: '任務完成。雖然動作慢了點，但你方才展現出的實力我姑且算是認可了。至少……比起那隻羚羊，你還算個讓人安心的夥伴，期待下次任務再見。' 
   },
   { id: 'boar', name: '鍛魂獷牙', element: '火屬性', color: '#bf360c', border: '#ff7043', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【火屬性】消除 3 顆角色珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【火屬性】消除 3 顆角色珠，將 3 顆角色珠尺寸變大，轉襲 2 顆超載珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/boar_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['想偷懶？沒那麼容易！', '淬鍊接近完成，火候正旺呢！'], 
     endingText: '這小子，手腳俐落、辦事效率還算挺像樣的嘛！我們砧鍛坊現在正缺你這種手藝靈光的人才，怎麼樣，有沒有興趣考慮來我這裡打工？我保證絕對會給你留個好位置喔！' 
   },
   { id: 'kaiden', name: '凱登', element: '水屬性', color: '#01579b', border: '#29b6f6', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【水屬性】點擊 5 秒內消除每球 500 分，漂浮 2 秒，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【水屬性】將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，5 秒內消除每球 500 分，漂浮 2 秒並消除 5 顆妨礙珠！', 
     bgUrl: 'images/kaiden_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['水流衝擊勁道十足，簡單就被咱拿下了！', '乘風破浪，跟著咱的節奏走就對啦！'], 
     endingText: '痛快！這場共鳴簡直就像在大海深處搏浪衝擊一樣過癮！從今天起你就是「炙海獵者」的一員了！……咦？克爾那傢伙在旁邊瞪什麼瞪？別理他，我說了算！' 
   },
   { id: 'gousuke', name: '豪助', element: '無能力', color: '#37474f', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/gousuke_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['表現真好，和預期的一樣呢', '只差一點了，再努力一下就好！'], 
     endingText: '和你一邊並肩執行任務，心底總會湧上一股彷彿認識多年的熟悉感，莫名地令人安心。你果斷的執行力更讓我打從心底感到嚮往與佩服……真希望有一天，我也能像你一樣變得那麼優秀、那麼可靠。' 
   },
   { id: 'chitar', name: '瞬介', element: '風屬性', color: '#f57f17', border: '#fff176', 
-    type: 'none', roleType: '使用者', reqLeader: 11, reqSupport: 9, 
-    desc: '【風屬性】自底部引發氣流 1.5 秒，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '使用者', reqLeader: 15, reqSupport: 17, 
+    desc: '【風屬性】產生暴風 1.5 秒，將 3 顆角色珠尺寸變大，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/chitar_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['哈哈，這麼輕鬆就跑過去啦！', '輕而易舉，小菜一碟！'], 
     endingText: '太過癮了！像這樣毫無保留、隨心所欲地在風中放肆奔跑，果然就是最痛快淋漓的事！別停下來，這次我們目標可是要把銳步教授給狠狠甩在後頭！說好了，最後輸的人可是要掏腰包請客的喔！' 
   },
   { id: 'horse', name: '颯太', element: '無能力', color: '#4e342e', border: '#b0bec5',
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/horse_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['看吧，只要撐著就能過關！', '課題接踵而來，沉著以對就能突破！'], 
     endingText: '互相扶持、彼此幫忙，果然才是通往勝利最快的捷徑！今天真的非常謝謝你鼎力相助，這段並肩作戰的過程讓我安心不少……說好了，下次有機會我們還要再一起組隊挑戰更難的關卡喔！' 
   },
   { id: 'sinn', name: '泊信', element: '無能力', color: '#263238', border: '#90a4ae', 
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/sinn_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['由我帶隊，一起衝吧！', '目標就在前方，注意啦！'], 
     endingText: '真是一位潛力無窮、讓人眼睛一亮的新人啊！來，我們乾一杯慶祝一下，這杯直接算我請你的！接下來也得繼續加把勁，才能幫上普大哥的忙呢！' 
   },
   { id: 'whissel', name: '旭言', element: '無能力', color: '#f57f17', border: '#b0bec5',
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/whissel_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['等待是值得的，頭條新聞有著落了！', '取材順利，這篇報導一定能大紅大紫！'], 
     endingText: '幸虧有你一路從旁鼎力相助，我們才能成功捕捉到眼前這幕如此關鍵的決定性瞬間。放心吧，我會把這份獨家真相毫無保留地呈獻給全世界，明天的頭條版面絕對會讓所有人大開眼界！' 
   },
   { id: 'rin', name: '嶙安', element: '無能力', color: '#37474f', border: '#b0bec5',
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/rin_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['你真厲害，我……我有幫上忙嗎？', '真沒想到……原來我也可以做到！'], 
     endingText: '呼……呼……直到這裡，我從來都沒想過自己竟然也有辦法抵達這種不可思議的境界……謝謝你讓我看見了這片全然不同的壯闊世界，這份深刻的感動與現在的悸動，我一輩子都會永遠銘記在心！' 
   },
   { id: 'cat', name: '瑟莉雅', element: '無能力', color: '#546e7a', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/cat_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['和平的日子，總在不知不覺中消失……', '我好像明白了，這就是所謂的「期望」嗎？'], 
     endingText: '這場共鳴讓我終於明白人與人之間的羈絆，就是這樣在不知不覺中建立起來的。現在的我，已經擁有足夠的勇氣去面對五十嵐老師了，真的非常謝謝你陪著我走過這段艱難的旅程。' 
   },
   { id: 'reva', name: '雷瓦維那', element: '火屬性', color: '#1a237e', border: '#5c6bc0', 
-    type: 'none', roleType: '地脈操流者', reqLeader: 11, reqSupport: 9, 
-    desc: '【火屬性】消除 3 顆角色珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '地脈操流者', reqLeader: 15, reqSupport: 17, 
+    desc: '【火屬性】消除 3 顆角色珠，將 3 顆角色珠尺寸變大，轉襲 2 顆超載珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/reva_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['傾聽、感受、揮棒。', '看啊，這就是你的脈能啊！'], 
     endingText: '你的表現實在太令我驚艷了。接下來的日子裡，我們一定要一起加倍努力，深入探索並學習更多關於地脈的古老神祕知識……我相信以你的資質，未來的成就絕對會遠遠超越我這把老骨頭的！' 
   },
   { id: 'leon', name: '萊昂維那', element: '無能力', color: '#263238', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/leon_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['防衛戰術奏效，我們要確實保護大家！', '推進順利，威脅將被清除殆盡！'], 
     endingText: '今天又這樣平安無事地度過啦。多虧有你一路全力相挺、從旁協助，我們才能順利將維那嶺守護得滴水不漏。看著眼前的這份平靜，不知不覺讓我想起那支四處奔波、充滿回憶的「無盡元素」探索隊呢。' 
   },
   { id: 'igrahhan', name: '伊格拉罕', element: '冰屬性', color: '#37474f', border: '#00bcd4', 
-    type: 'none', roleType: '地脈操流者', reqLeader: 11, reqSupport: 9, 
-    desc: '【冰屬性】消除 5 顆妨礙珠，再生成 5 顆冰珠。', 
+    type: 'none', roleType: '地脈操流者', reqLeader: 15, reqSupport: 17, 
+    desc: '【冰屬性】將 3 顆角色珠尺寸變大，消除 5 顆妨礙珠，並轉襲 6 顆冰珠。', 
     bgUrl: 'images/igrahhan_bg.webp', isLandscape: true, 
     cleared: false, cheers: ['北原十分險峻的，小心為上。', '靠過來點，我的狼群會保護你的。'], 
     endingText: '瞧你這副模樣……看來你身上似乎隱藏著相當驚人的地脈操控潛力呢。怎麼樣，有興趣跟著我們一起在北園生活嗎？只要你點頭，白原行族的大門永遠隨時為你敞開，熱烈歡迎你的加入！' 
   },
   { id: 'touphrin', name: '塔芙琳', element: '土屬性', color: '#00838f', border: '#80deea', 
-    type: 'none', roleType: '地脈操流者', reqLeader: 11, reqSupport: 9, 
-    desc: '【土屬性】引發地震波，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '地脈操流者', reqLeader: 15, reqSupport: 17, 
+    desc: '【土屬性】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/touphrin_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['地脈導流非常順利，輕鬆過關！', '那邊，我們去那邊瞧瞧吧！'], 
     endingText: '太棒了！只要有你陪在身邊一起冒險，不管到哪裡都熱鬧得不得了，一點也感受不到枯燥乏味呢！怎麼樣，接下來我們要出發去哪邊探索才好呢？' 
   },
   { id: 'tormunn', name: '拓穆恩', element: '無能力', color: '#e65100', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/tormunn_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['趁有點空檔，讓我帶你逛逛吧！', '交易目標就在眼前，加把勁嚴守底線！'], 
     endingText: '多虧有你從旁鼎力協助，這場交易才能談得如此漂亮成功。像你這樣既有眼光又懂精打細算的商業人才實在難得，希望接下來的日子裡，我們還能繼續愉快地合作下去！' 
   },
   { id: 'grossa', name: '格洛薩', element: '無能力', color: '#212121', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 11, reqSupport: 9, 
-    desc: '【應援】降下 2 金珠，並消除 5 顆妨礙珠。', 
+    type: 'none', roleType: '無能力者', reqLeader: 15, reqSupport: 17, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/grossa_bg.webp', isLandscape: true, cleared: false, 
-    cheers: ['〞哼，這種局面只是小意思而已。', '機會來了，準備開牌大獲全勝吧！'], 
+    cheers: ['哼，這種局面只是小意思而已。', '機會來了，準備開牌大獲全勝吧！'], 
     endingText: '技術確實有兩下子。既然這樣，看來我得動點心思把你留下來替我做事才行。怎麼樣？我給的待遇絕對優渥大方，保證你跟著我混絕對不會有後悔的一天！' 
   }
 ];
@@ -1425,6 +1463,8 @@ let fusionBeams = null;
 let isCastingSkill = false;
 
 let manualDropRemaining = 5;
+let barrierItemRemaining = 1;
+const btnUseBarrierEl = document.getElementById('btn-use-barrier');
 
 /* ================= Pixi.js / WebGL 高效能特效與粒子系統 ================= */
 let pixiApp = null;
@@ -1699,7 +1739,7 @@ function renderTrackersUI() {
     node.className = 'tracker-node';
     node.id = `tracker-${c.id}`;
     node.innerHTML = `
-      <div class="tracker-dot" style="background:${c.color}; border:1.5px solid ${c.border};"></div>
+      <div class="tracker-dot" style="background-image: url('images/${c.id}.webp'); border:1.5px solid ${c.border};"></div>
       <div class="tracker-val" id="trk-val-${c.id}">${trk.count}/${trk.max}</div>
     `;
     sideEl.appendChild(node);
@@ -1717,9 +1757,12 @@ function updateTrackersUI(charId) {
 document.getElementById('btn-enter-game').onclick = () => {
   playSynthPopSFX();
   document.getElementById('title-screen').style.display = 'none';
-  document.getElementById('modal-select-leader').style.display = 'flex';
-  gameStatus = 'SELECTING';
-  renderLeaderSelection();
+  openGameGuide(() => {
+    document.getElementById('modal-game-guide').style.display = 'none';
+    document.getElementById('modal-select-leader').style.display = 'flex';
+    gameStatus = 'SELECTING';
+    renderLeaderSelection();
+  });
 };
 
 document.getElementById('btn-leader-back').onclick = () => {
@@ -1804,12 +1847,14 @@ function updateVariantDescText() {
     const s1 = selectedVariant.stageSkillTargets[0];
     const s2 = selectedVariant.stageSkillTargets[1];
     const s3 = selectedVariant.stageSkillTargets[2];
-    descEl.innerHTML = `<strong>${selectedLeader.name}・${selectedVariant.title}</strong><br><span style="color:#ffb74d;">【權能連鎖考驗】隊長發動需求 +2！各關目標：釋放 ${s1} / ${s2} / ${s3} 次隊長技能</span><br>${selectedLeader.desc}`;
+    descEl.innerHTML = `<strong>${selectedLeader.name}・${selectedVariant.title}</strong><br><span style="color:#ffb74d;">【權能連鎖考驗】隊長發動需求 +2！各關目標：使用 ${s1} / ${s2} / ${s3} 次隊長技能<br>※ 本挑戰無法使用「震巖流」技能</span><br>${selectedLeader.desc}`;
   } else {
     const vt1 = calculateStageTarget(1);
     const vt2 = calculateStageTarget(2);
     const vt3 = calculateStageTarget(3);
-    descEl.innerHTML = `<strong>${selectedLeader.name}・${selectedVariant.title}</strong><br>關卡門檻：Stage 1: ${vt1} / 2: ${vt2} / 3: ${vt3}<br>${selectedLeader.desc}`;
+    const isScoreChallenge = selectedVariant.baseTarget && selectedVariant.baseTarget > 42000;
+    const restrictionText = isScoreChallenge ? '<br><span style="color:#ff5555;">※ 本挑戰無法使用「流星火彈」技能</span>' : '';
+    descEl.innerHTML = `<strong>${selectedLeader.name}・${selectedVariant.title}</strong><br>關卡門檻：Stage 1: ${vt1} / 2: ${vt2} / 3: ${vt3}${restrictionText}<br>${selectedLeader.desc}`;
   }
 }
 
@@ -1850,7 +1895,7 @@ function showMatchBrief() {
 document.getElementById('btn-brief-back').onclick = () => {
   playSynthPopSFX();
   document.getElementById('modal-match-brief').style.display = 'none';
-  document.getElementById('modal-select-leader').style.display = 'flex';
+  resetToTitleScreen(); // 這是回到首頁
 };
 
 document.getElementById('btn-start-play').onclick = () => {
@@ -1878,16 +1923,166 @@ document.getElementById('btn-quit-cancel').onclick = () => {
   playSynthPopSFX();
   document.getElementById('modal-confirm-quit').style.display = 'none';
 };
+document.getElementById('btn-open-guide-in-game').onclick = () => {
+  playSynthPopSFX();
+  document.getElementById('modal-confirm-quit').style.display = 'none';
+  openGameGuide(() => {
+    document.getElementById('modal-game-guide').style.display = 'none';
+    document.getElementById('modal-confirm-quit').style.display = 'flex';
+  });
+};
 document.getElementById('btn-quit-confirm').onclick = () => {
   playSynthPopSFX();
   hasClearedAnyStageInCurrentRun = false; // 中途放棄時重置背景標記，使主畫面變回預設
   resetToTitleScreen();
 };
+let currentGuidePage = 1;
+const totalGuidePages = 4;
+let guideActionCallback = null;
 
+function openGameGuide(onCloseCallback) {
+  guideActionCallback = onCloseCallback;
+  currentGuidePage = 1;
+  renderGuidePage();
+  document.getElementById('modal-game-guide').style.display = 'flex';
+}
+
+function renderGuidePage() {
+  const contentBox = document.getElementById('guide-content-box');
+  const pageIndicator = document.getElementById('guide-page-indicator');
+  const prevBtn = document.getElementById('guide-prev-btn');
+  const nextBtn = document.getElementById('guide-next-btn');
+  const actionBtn = document.getElementById('guide-action-btn');
+
+  pageIndicator.innerText = `${currentGuidePage} / ${totalGuidePages}`;
+  prevBtn.disabled = (currentGuidePage === 1);
+  nextBtn.disabled = (currentGuidePage === totalGuidePages);
+
+  if (currentGuidePage === totalGuidePages) {
+    actionBtn.innerText = (gameStatus === 'PLAYING') ? '回到遊戲' : '選擇隊長';
+  } else {
+    actionBtn.innerText = '略過說明';
+  }
+
+  let html = '';
+  switch (currentGuidePage) {
+    case 1:
+      html = `
+        <div style="font-weight:bold; color:#ff9800; margin-bottom:6px;">【基本規則】</div>
+        <p>玩家需點擊<strong>三顆以上連在一起</strong>的相同角色珠來進行消除並獲得分數。</p>
+        <p style="margin-top:6px;">在限制時間內達成指定的階段過關目標（或其他指定條件），即可成功推進至下一階段。</p>
+      `;
+      break;
+    case 2:
+      html = `
+        <div style="font-weight:bold; color:#ff9800; margin-bottom:6px;">【賦能珠介紹】</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <div style="position:relative; width:28px; height:28px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #ffd700; box-shadow:0 0 8px rgba(255,215,0,0.6); flex-shrink:0;">
+            <div style="position:absolute; inset:-3px; border:2px dashed #ffd700; border-radius:50%;"></div>
+          </div>
+          <div style="font-size:11px;"><strong>權能珠</strong>：發動角色專屬權能效果。</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <div style="position:relative; width:28px; height:28px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; box-shadow:0 0 8px rgba(255,215,0,0.8); flex-shrink:0;">
+            <div style="position:absolute; inset:-2px; border:2px solid #ffd700; border-radius:50%;"></div>
+          </div>
+          <div style="font-size:11px;"><strong>黃金珠</strong>：消除獲得 3 倍高額分數加成。</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <div style="position:relative; width:28px; height:28px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; box-shadow:0 0 8px rgba(224,123,70,0.9); flex-shrink:0;">
+            <div style="position:absolute; inset:-2px; border:2px solid #e07b46; border-radius:50%;"></div>
+          </div>
+          <div style="font-size:11px;"><strong>萬配珠</strong>：可與周遭不同角色珠串聯消除。</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="position:relative; width:28px; height:28px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; box-shadow:0 0 8px rgba(41,182,246,0.8); flex-shrink:0;">
+            <div style="position:absolute; inset:-2px; border:2px solid #29b6f6; border-radius:50%;"></div>
+          </div>
+          <div style="font-size:11px;"><strong>延時珠</strong>：消除後額外增加 5 秒時間。</div>
+        </div>
+      `;
+      break;
+    case 3:
+      html = `
+        <div style="font-weight:bold; color:#ff9800; margin-bottom:6px;">【妨礙珠介紹】</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+          <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
+            <div style="position:absolute; inset:0; background:#111216; border-radius:50%; border:2px solid #7c4dff;"></div>
+          </div>
+          <div style="font-size:10px;"><strong>幕盲珠</strong>：外觀化為無法辨識的珠子，可正常消除。</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+          <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
+            <div style="position:absolute; inset:0; background:rgba(76,175,80,0.55); border-radius:50%;"></div>
+          </div>
+          <div style="font-size:10px;"><strong>吞噬珠</strong>：每 3 秒扣 100 分，可正常消除。</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+          <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
+            <div style="position:absolute; inset:0; background:rgba(30,30,30,0.85); border-radius:50%;"></div>
+          </div>
+          <div style="font-size:10px;"><strong>黑質珠</strong>：無法正常消除的干擾珠。</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+          <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
+            <div style="position:absolute; inset:0; background:rgba(0,229,255,0.45); border-radius:50%;"></div>
+          </div>
+          <div style="font-size:10px;"><strong>冰封珠</strong>：被冰結，點擊後可解凍復原。</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
+            <div style="position:absolute; inset:-2px; border:2px solid #ff1744; border-radius:50%;"></div>
+          </div>
+          <div style="font-size:10px;"><strong>超載珠</strong>：10秒倒數炸彈，歸零未處理每顆扣1500分。</div>
+        </div>
+      `;
+      break;
+    case 4:
+      html = `
+        <div style="font-weight:bold; color:#ff9800; margin-bottom:6px;">【亞爾克的協助技能】</div>
+        <div style="font-size:11px; color:#ccc; margin-bottom:8px;">畫面右上角可隨時使用的救援手段：</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <button class="btn sub" style="pointer-events:none; font-size:10px; padding:4px 8px; flex-shrink:0;">流星火彈 (5)</button>
+          <div style="font-size:11px;">額外落下一批角色珠。</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button class="btn sub" style="pointer-events:none; font-size:10px; padding:4px 8px; flex-shrink:0;">震巖流！ (1)</button>
+          <div style="font-size:11px;">發動劇烈震擊，立即清除 5 個妨礙珠並轉襲 10 顆萬配珠。</div>
+        </div>
+      `;
+      break;
+  }
+  contentBox.innerHTML = html;
+}
+
+document.getElementById('guide-prev-btn').onclick = () => {
+  playSynthPopSFX();
+  if (currentGuidePage > 1) {
+    currentGuidePage--;
+    renderGuidePage();
+  }
+};
+
+document.getElementById('guide-next-btn').onclick = () => {
+  playSynthPopSFX();
+  if (currentGuidePage < totalGuidePages) {
+    currentGuidePage++;
+    renderGuidePage();
+  }
+};
+
+document.getElementById('guide-action-btn').onclick = () => {
+  playSynthPopSFX();
+  if (typeof guideActionCallback === 'function') {
+    guideActionCallback();
+  }
+};
 /* ================= 階段啟動 ================= */
 function calculateStageTarget(stage) {
   let base = 42000;
-  if (selectedLeader.variants && selectedLeader.variants.length > 0) {
+  if (selectedVariant && selectedVariant.baseTarget) {
+    base = selectedVariant.baseTarget;
+  } else if (selectedLeader.variants && selectedLeader.variants.length > 0) {
     const currentV = selectedVariant || selectedLeader.variants[0];
     base = currentV.baseTarget || 42000;
   }
@@ -1914,8 +2109,30 @@ function startStage(stage, shouldReshuffle = true) {
   currentScore = 0;
   currentStageSkillCount = 0;
   manualDropRemaining = 5;
-  btnManualDropEl.innerText = `+ 補給落珠 (${manualDropRemaining})`;
-  btnManualDropEl.disabled = false;
+  btnManualDropEl.innerText = `流星火彈 (${manualDropRemaining})`;
+  
+  // 第二種分支挑戰（挑戰：陪伴 / 成長等加分分支，此處以 id === 'overload' 或判定目標為主）
+  const isSecondVariant = selectedVariant && selectedVariant.baseTarget && selectedVariant.baseTarget > 42000;
+  if (isSecondVariant) {
+    btnManualDropEl.disabled = true;
+    btnManualDropEl.style.opacity = '0.4';
+  } else {
+    btnManualDropEl.disabled = false;
+    btnManualDropEl.style.opacity = '1';
+  }
+
+  barrierItemRemaining = 1;
+  btnUseBarrierEl.innerText = `震巖流！ (${barrierItemRemaining})`;
+  
+  // 第三種分支挑戰（權能連鎖考驗目標）
+  const isThirdVariant = selectedVariant && selectedVariant.goalType === 'skillCount';
+  if (isThirdVariant) {
+    btnUseBarrierEl.disabled = true;
+    btnUseBarrierEl.style.opacity = '0.4';
+  } else {
+    btnUseBarrierEl.disabled = false;
+    btnUseBarrierEl.style.opacity = '1';
+  }
 
   const isSkillCountGoal = selectedVariant && selectedVariant.goalType === 'skillCount';
 
@@ -2029,23 +2246,35 @@ function getRandomWeightedChar() {
   return currentMatchChars[4];
 }
 
-function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false, isBlackBall = false, isFrozenBall = false, isGreenBall = false, isGoldBall = false, isAttributePending = false, isSmallBall = false, isBlindBlack = false, isLeadBall = false, isChainLocked = false, isBomb = false, isHourglass = false, isFrenzy = false, isShield = false) {
+function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false, isBlackBall = false, isFrozenBall = false, isGreenBall = false, isGoldBall = false, isAttributePending = false, isSmallBall = false, isBlindBlack = false, isChainLocked = false, isBomb = false, isHourglass = false, isFrenzy = false, isShield = false) {
   const char = forcedChar || getRandomWeightedChar();
   
-  let isSmall = isSmallBall || (performance.now() < oaeSmallDropTimer);
+  let isKokumeiChaos = performance.now() < (window.kokumeiChaosEndTimer || 0);
+  let isSmall = isSmallBall || (performance.now() < oaeSmallDropTimer) || (isKokumeiChaos && Math.random() < 0.5);
+  
   let radius = BALL_RADIUS;
   if (isSpecialOrb) radius = SPECIAL_ORB_RADIUS;
   else if (isSmall) radius = BALL_RADIUS * 0.65;
-  else if (performance.now() < zarionBigDropEndTimer) radius = BALL_RADIUS * 1.25;
+  else if (performance.now() < zarionBigDropEndTimer || (isKokumeiChaos && !isSmall)) radius = BALL_RADIUS * 1.25;
 
   let densityVal = 0.002;
-  if (isLeadBall) densityVal = 0.025;
-  else if (isSpecialOrb) densityVal = 0.0032;
+  if (isSpecialOrb) densityVal = 0.0032;
   else if (isSmall) densityVal = 0.001;
 
+  // 防呆：確保超載珠具有最高排他性
+  let activeFlags = [isBlackBall, isFrozenBall, isGreenBall, isGoldBall, isChainLocked, isBomb, isHourglass, isFrenzy].filter(Boolean).length;
+  if (activeFlags > 1 && isBomb) {
+    isBlackBall = false;
+    isFrozenBall = false;
+    isGreenBall = false;
+    isGoldBall = false;
+    isChainLocked = false;
+    isFrenzy = false;
+    isHourglass = false;
+  }
   const body = Bodies.circle(x, y, radius, {
-    restitution: isLeadBall ? 0.02 : 0.08,
-    friction: isLeadBall ? 0.45 : 0.18,
+    restitution: 0.08,
+    friction: 0.18,
     frictionAir: 0.034,
     density: densityVal
   });
@@ -2058,7 +2287,6 @@ function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false, isBlackB
   body.isAttributePending = isAttributePending;
   body.isSmallBall = isSmall;
   body.isBlindBlack = isBlindBlack;
-  body.isLeadBall = isLeadBall;
   body.isChainLocked = isChainLocked;
   body.chainLockCount = isChainLocked ? 2 : 0;
   body.isBomb = isBomb;
@@ -2102,11 +2330,58 @@ function refillBalls(targetCount) {
   rakuNextGoldWave = false;
 }
 
+document.getElementById('btn-use-barrier').onclick = () => {
+  playSynthPopSFX();
+  if (selectedVariant && selectedVariant.goalType === 'skillCount') {
+    showBanner('【權能連鎖考驗】此挑戰無法使用震巖流！');
+    return;
+  }
+  if (gameStatus !== 'PLAYING' || isCastingSkill || barrierItemRemaining <= 0) return;
+  barrierItemRemaining--;
+  btnUseBarrierEl.innerText = `震巖流！ (${barrierItemRemaining})`;
+  btnUseBarrierEl.disabled = true;
+
+  // 畫面劇烈震動
+  screenShakeTimer = 0.8;
+  hitStopUntil = performance.now() + 80;
+
+  // 清除 5 顆妨礙珠
+  removeRandomObstacles(5);
+
+  // 對全場所有球體施加激震推力
+  balls.forEach(b => {
+    Matter.Sleeping.set(b, false);
+    const upwardForce = -(Math.random() * 10.0 + 12.0);
+    const jitterX = (Math.random() - 0.5) * 12.0;
+    Body.setVelocity(b, { x: b.velocity.x + jitterX, y: upwardForce });
+    triggerSpark(b.position.x, b.position.y, '#e07b46');
+  });
+
+  // 隨機將 10 顆球標記為萬配珠
+  const normalBalls = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending);
+  const pickedFrenzy = normalBalls.sort(() => Math.random() - 0.5).slice(0, 10);
+  pickedFrenzy.forEach(b => {
+    b.isFrenzy = true;
+    createVFX(b.position.x, b.position.y, '#e07b46', 10);
+  });
+
+  showBanner('【震巖流】發動激震，消除 5 顆妨礙珠，轉襲 10 顆萬配珠！');
+  createVFX(VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT * 0.67, '#e07b46', 45);
+  spawnPixiExplosion(VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT * 0.67, 0xe07b46, 50);
+};
+
 document.getElementById('btn-manual-drop').onclick = () => {
   playSynthPopSFX();
+  if (selectedVariant && selectedVariant.baseTarget && selectedVariant.goalType !== 'skillCount') {
+    // 透過比對挑戰分支 ID 或確認是否為第二種分支（以過載/分數+5000判定）
+  }
+  if (selectedVariant && selectedVariant.baseTarget && selectedVariant.baseTarget > 42000) {
+    showBanner('【挑戰加分】此挑戰無法使用流星火彈！');
+    return;
+  }
   if (gameStatus !== 'PLAYING' || isCastingSkill || isManualDropLocked || manualDropRemaining <= 0) return;
   manualDropRemaining--;
-  btnManualDropEl.innerText = `+ 補給落珠 (${manualDropRemaining})`;
+  btnManualDropEl.innerText = `流星火彈 (${manualDropRemaining})`;
   if (manualDropRemaining <= 0) {
     btnManualDropEl.disabled = true;
   }
@@ -2137,7 +2412,8 @@ function removeRandomObstacles(count = 5) {
     showBanner('【恆定】免疫妨礙效果！');
     return 0;
   }
-  const obstacles = balls.filter(b => (b.isBlackBall || b.isFrozenBall || b.isGreenBall || b.isLeadBall || b.isChainLocked || b.isBomb) && !b.isSpecialOrb && !b.isAttributePending);
+  // 已移除 isLeadBall，保留黑珠、冰珠、綠珠、鎖鏈珠與超載珠 (isBomb)
+  const obstacles = balls.filter(b => (b.isBlackBall || b.isFrozenBall || b.isGreenBall || b.isChainLocked || b.isBomb) && !b.isSpecialOrb && !b.isAttributePending);
   const picked = obstacles.sort(() => Math.random() - 0.5).slice(0, count);
   picked.forEach(b => {
     createVFX(b.position.x, b.position.y, '#45f3ff', 10);
@@ -2183,7 +2459,7 @@ function handleTap(pos) {
     return;
   }
 
-  if (clickedBall.isBlackBall || clickedBall.isLeadBall) {
+  if (clickedBall.isBlackBall) {
     playSynthPopSFX();
     return;
   }
@@ -2221,8 +2497,11 @@ function findConnectedSameTypeCluster(startBall) {
   while (queue.length > 0) {
     const current = queue.shift();
     for (let other of balls) {
-      const isMatch = (other.charData.id === targetType || other.isFrenzy || startBall.isFrenzy);
-      if (!visited.has(other) && !other.isSpecialOrb && !other.isBlackBall && !other.isLeadBall && !other.isFrozenBall && !other.isAttributePending && isMatch) {
+      // 修正：只有當目標與點擊對象同色，或者「本身是狂熱球且距離夠近」時才允許串聯，不無條件全盤引爆
+      const isSameColor = (other.charData.id === targetType);
+      const isFrenzyMatch = (other.isFrenzy && Math.hypot(startBall.position.x - other.position.x, startBall.position.y - other.position.y) < BALL_RADIUS * 4.5);
+      
+      if (!visited.has(other) && !other.isSpecialOrb && !other.isBlackBall && !other.isLeadBall && !other.isFrozenBall && !other.isAttributePending && (isSameColor || isFrenzyMatch)) {
         const d = Math.hypot(current.position.x - other.position.x, current.position.y - other.position.y);
         if (d < CONNECT_DIST) {
           visited.add(other);
@@ -2283,10 +2562,22 @@ function executeSingleSkill(orb) {
     if (idx !== -1) balls.splice(idx, 1);
 
     removeRandomObstacles(5);
-    showBanner(`【${char.name}・應援爆發】降下 2 金珠，並消除 5 妨礙珠！`);
+    showBanner(`【${char.name}・應援爆發】轉襲 2 顆黃金珠、落下 2 顆萬配珠，並消除 5 顆妨礙珠！`);
+    
+    // 嚴格過濾場上一般珠子，互相避開不重疊
+    const cleanBallsG = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall && !b.isFrenzy && !b.isBlackBall && !b.isFrozenBall && !b.isGreenBall && !b.isChainLocked && !b.isLeadBall && !b.isBomb);
+    const shuffledG = [...cleanBallsG].sort(() => Math.random() - 0.5);
+
+    // 變化 2 顆金珠
+    const goldBatchG = shuffledG.slice(0, 2);
+    goldBatchG.forEach(b => { b.isGoldBall = true; createVFX(b.position.x, b.position.y, '#ffd700', 10); });
+
+    // 落下 2 顆萬配珠 (isFrenzy = true)
     for (let i = 0; i < 2; i++) {
-      spawnSingleBall(Math.random() * VIRTUAL_WIDTH, 40, selectedLeader, false, false, false, false, true);
+      const bF = spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar());
+      bF.isFrenzy = true;
     }
+
     isCastingSkill = false;
     return;
   }
@@ -2325,7 +2616,7 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【震動】地震轟鳴，消除 8 顆角色珠，並消除 3 個妨礙珠！');
+    showBanner('【震動】地震轟鳴，消除 8 顆角色珠，並消除 3 顆妨礙珠！');
     screenShakeTimer = 0.50;
     hitStopUntil = performance.now() + 65;
     removeRandomObstacles(3);
@@ -2352,7 +2643,7 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【回歸】清除妨礙珠，並降下 5 顆延時珠！');
+    showBanner('【回歸】清除妨礙珠，並將盤面上 5 顆珠子轉襲為延時珠！');
     balls.forEach(b => {
       if (b.isBlackBall || b.isFrozenBall || b.isGreenBall || b.isChainLocked || b.isLeadBall || b.isBomb) {
         createVFX(b.position.x, b.position.y, '#29b6f6', 8);
@@ -2364,10 +2655,19 @@ function executeSingleSkill(orb) {
       if (!world.bodies.includes(balls[i])) balls.splice(i, 1);
     }
 
-    for (let i = 0; i < 5; i++) {
-      const matchChar = currentMatchChars[Math.floor(Math.random() * currentMatchChars.length)];
-      spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 28), matchChar, false, false, false, false, false, false, false, false, false, false, false, true);
-    }
+    // 取得洛爾角色資料
+    const roarChar = CHARACTER_DATABASE.find(c => c.id === 'roar') || selectedLeader;
+    
+    // 在盤面上隨機挑選 5 顆一般珠子轉化為延時珠
+    const cleanBallsR = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall && !b.isHourglass);
+    const shuffledR = [...cleanBallsR].sort(() => Math.random() - 0.5);
+    const pickedHourglass = shuffledR.slice(0, 5);
+
+    pickedHourglass.forEach(b => {
+      b.isHourglass = true;
+      createVFX(b.position.x, b.position.y, '#29b6f6', 12);
+    });
+
     isCastingSkill = false;
     return;
   }
@@ -2379,13 +2679,18 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【成長】8 秒內落下大珠，隨機變大 10 顆珠子，並消除 5 個妨礙珠！');
+    showBanner('【成長】8 秒內落下珠子尺寸變大，隨機變大 10 顆珠子與轉襲 5 顆萬配珠，並消除 5 個妨礙珠！');
     zarionBigDropEndTimer = performance.now() + 8000;
     removeRandomObstacles(5);
 
-    const normalBalls = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending);
-    const pickedBig = normalBalls.sort(() => Math.random() - 0.5).slice(0, 10);
+    // 避開特殊與狀態珠，選取 10 顆變大，再選另外 10 顆不重複的變為萬配珠
+    const cleanBalls = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrenzy);
+    const shuffledZ = [...cleanBalls].sort(() => Math.random() - 0.5);
+    const pickedBig = shuffledZ.slice(0, 10);
     pickedBig.forEach(b => resizeBallBody(b, BALL_RADIUS * 1.35));
+
+    const pickedFrenzyZ = shuffledZ.slice(10, 20);
+    pickedFrenzyZ.forEach(b => { b.isFrenzy = true; });
 
     isCastingSkill = false;
     return;
@@ -2398,13 +2703,24 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【創生】洗版重置，引發 1 秒引力，並消除 3 個妨礙珠！');
+    showBanner('【創生】洗版重置，引發 1 秒引力，並轉襲 3 顆黃金珠！');
     balls.forEach(b => World.remove(world, b));
     balls.length = 0;
     spawnOpeningWave(40);
-    removeRandomObstacles(3);
+    
     blackHolePos = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT / 2 };
     blackHoleTimer = 1;
+
+    // 隨機從場上挑選 3 顆珠子轉化為金珠
+    const cleanBallsJ = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall && !b.isFrenzy);
+    const shuffledJ = [...cleanBallsJ].sort(() => Math.random() - 0.5);
+    const pickedGoldJ = shuffledJ.slice(0, 3);
+    
+    pickedGoldJ.forEach(b => {
+      b.isGoldBall = true;
+      createVFX(b.position.x, b.position.y, '#ffd700', 12);
+    });
+
     isCastingSkill = false;
     return;
   }
@@ -2416,7 +2732,7 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【恆定】阻止妨礙效果發動 8 秒，並消除 5 顆妨礙珠！');
+    showBanner('【恆定】免疫妨礙效果發動 8 秒，並消除 5 顆妨礙珠！');
     isNegativeSealActive = true;
     negativeSealTimer = 8.0; // <-- 改為 8 秒
     removeRandomObstacles(5);
@@ -2431,27 +2747,35 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【極限】妨礙珠化為角色珠，轉化 5 顆金珠，並消除 5 個妨礙珠！');
+    showBanner('【極限】將妨礙珠轉襲為萬配珠，並轉襲 5 顆黃金珠！');
+    
+    // 將現有的妨礙珠全部轉化為萬配珠（Frenzy），並解除其妨礙屬性
     balls.forEach(b => {
       if (b.isBlackBall || b.isFrozenBall || b.isGreenBall || b.isChainLocked || b.isLeadBall || b.isBomb) {
-        b.charData = char;
-        b.isBlackBall = false; 
-        b.isFrozenBall = false; 
+        b.isBlackBall = false;
+        b.isFrozenBall = false;
         b.isGreenBall = false;
         b.isChainLocked = false;
         b.isLeadBall = false;
         b.isBomb = false;
-        createVFX(b.position.x, b.position.y, '#f06292', 8);
+        b.isFrenzy = true;
+        createVFX(b.position.x, b.position.y, '#e07b46', 8);
       }
     });
-    removeRandomObstacles(5);
 
-    const candidates = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall).sort(() => Math.random() - 0.5).slice(0, 5);
-    candidates.forEach(b => { b.isGoldBall = true; });
+    // 隨機從場上一般珠子中挑選 5 顆轉化為金珠
+    const cleanBallsK = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall && !b.isFrenzy);
+    const shuffledK = [...cleanBallsK].sort(() => Math.random() - 0.5);
+    const pickedGoldK = shuffledK.slice(0, 5);
+    
+    pickedGoldK.forEach(b => {
+      b.isGoldBall = true;
+      createVFX(b.position.x, b.position.y, '#ffd700', 12);
+    });
+
     isCastingSkill = false;
     return;
   }
-
   if (char.id === 'igarashi') {
     createVFX(orb.position.x, orb.position.y, '#26c6da', 30);
     spawnPixiExplosion(orb.position.x, orb.position.y, 0x26c6da, 40);
@@ -2460,7 +2784,7 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【氣候】產生氣流 1 秒，連鎖引爆 8 顆珠子，並消除 3 個妨礙珠！');
+    showBanner('【氣候】產生暴風 1 秒，連鎖引爆 8 顆珠子，並消除 3 個妨礙珠！');
     blackHolePos = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT / 2 };
     blackHoleTimer = 1.0;
     removeRandomObstacles(3);
@@ -2519,17 +2843,19 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【權位】降下 5 顆金珠，發動 1 秒引力後漂浮 2 秒，並消除 5 個妨礙珠！');
-    for (let i = 0; i < 5; i++) {
-      spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 28), selectedLeader, false, false, false, false, true);
-    }
-    blackHolePos = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT * 0.75 };
-    blackHoleTimer = 1.0;
+    showBanner('【權位】轉襲 5 顆黃金珠與 5 顆萬配珠，並消除 5 個妨礙珠！');
+    
+    // 嚴格過濾場上一般珠子，互相避開不重疊
+    const cleanBallsW = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall && !b.isFrenzy && !b.isBlackBall && !b.isFrozenBall && !b.isGreenBall && !b.isChainLocked && !b.isLeadBall && !b.isBomb);
+    const shuffledW = [...cleanBallsW].sort(() => Math.random() - 0.5);
 
-    setTimeout(() => {
-      zeroGravityTimer = 2.0;
-      engine.gravity.y = 0.02;
-    }, 1000);
+    // 變化 5 顆金珠
+    const goldBatchW = shuffledW.slice(0, 5);
+    goldBatchW.forEach(b => { b.isGoldBall = true; createVFX(b.position.x, b.position.y, '#ffd700', 10); });
+
+    // 變化 5 顆萬配珠（特效顏色改為主題橘色）
+    const frenzyBatchW = shuffledW.slice(5, 10);
+    frenzyBatchW.forEach(b => { b.isFrenzy = true; createVFX(b.position.x, b.position.y, '#e07b46', 10); });
 
     removeRandomObstacles(5);
     isCastingSkill = false;
@@ -2543,8 +2869,14 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【斷裂】重力反轉 1 秒，再左右重力牽引 1 秒，並消除 3 個妨礙珠！');
+    showBanner('【斷裂】重力反轉 1 秒，左右重力牽引 1 秒，落下 5 顆萬配珠，並消除 3 個妨礙珠！');
     removeRandomObstacles(3);
+
+    // 落下 5 顆萬配珠
+    for (let i = 0; i < 5; i++) {
+      const bF = spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 25), getRandomWeightedChar());
+      bF.isFrenzy = true;
+    }
 
     engine.gravity.y = -BASE_GRAVITY;
     gravityEffectTimer = 1.0;
@@ -2569,23 +2901,24 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【躍離】變大 10 顆、變小 10 顆珠子，將 5 顆珠子變金珠，並消除 5 個妨礙珠！');
+    showBanner('【躍離】變大 10 顆、變小 10 顆角色珠，轉襲 5 顆金珠與 5 顆萬配珠，並消除 5 妨礙珠！');
     removeRandomObstacles(5);
 
-    const normalBalls = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending);
-    const shuffled = [...normalBalls].sort(() => Math.random() - 0.5);
+    // 嚴格過濾、互相避開不重疊
+    const cleanBallsR = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall && !b.isFrenzy);
+    const shuffledR = [...cleanBallsR].sort(() => Math.random() - 0.5);
 
-    const bigBatch = shuffled.slice(0, 10);
+    const bigBatch = shuffledR.slice(0, 10);
     bigBatch.forEach(b => resizeBallBody(b, BALL_RADIUS * 1.35));
 
-    const smallBatch = shuffled.slice(10, 20);
+    const smallBatch = shuffledR.slice(10, 20);
     smallBatch.forEach(b => resizeBallBody(b, BALL_RADIUS * 0.65));
 
-    const pickedGold = normalBalls.sort(() => Math.random() - 0.5).slice(0, 5);
-    pickedGold.forEach(b => {
-      b.isGoldBall = true;
-      createVFX(b.position.x, b.position.y, '#00e5ff', 12);
-    });
+    const goldBatch = shuffledR.slice(20, 25);
+    goldBatch.forEach(b => { b.isGoldBall = true; });
+
+    const frenzyBatch = shuffledR.slice(25, 30);
+    frenzyBatch.forEach(b => { b.isFrenzy = true; });
 
     isCastingSkill = false;
     return;
@@ -2599,8 +2932,17 @@ function executeSingleSkill(orb) {
     const idx = balls.indexOf(orb);
     if (idx !== -1) balls.splice(idx, 1);
 
-    showBanner('【鎔鑄】連鎖引爆 8 顆珠子，並消除 3 個妨礙珠！');
+    showBanner('【鎔鑄】連鎖引爆 8 顆珠子，轉襲 2 顆超載珠，並消除 3 個妨礙珠！');
     removeRandomObstacles(3);
+
+    // 變化 2 顆超載珠
+    const cleanBallsGz = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isBomb);
+    cleanBallsGz.sort(() => Math.random() - 0.5).slice(0, 2).forEach(b => {
+      b.isBomb = true;
+      b.bombTimer = 10.0;
+      createVFX(b.position.x, b.position.y, '#ff1744', 10);
+    });
+
     const chainTargets = balls
       .filter(b => !b.isSpecialOrb && !b.isAttributePending)
       .sort((a, b) => Math.hypot(a.position.x - originPos.x, a.position.y - originPos.y) - Math.hypot(b.position.x - originPos.x, b.position.y - originPos.y))
@@ -2648,7 +2990,7 @@ function executeSingleSkill(orb) {
 
   if (char.id === 'kulu') {
     spawnPixiExplosion(orb.position.x, orb.position.y, 0x1a3b5c, 45);
-    showBanner('【理解】建立意識流連結消除 8 顆角色珠，並消除 3 個妨礙珠！');
+    showBanner('【理解】建立意識流連結消除 8 顆角色珠，並消除 3 顆妨礙珠！');
     removeRandomObstacles(3);
     const targets = findClusterAroundExcludingSpecial(orb, FUSION_MAX_SELECT);
     fusionBeams = targets.map(t => ({ from: orb, to: t }));
@@ -2695,7 +3037,7 @@ function triggerCharSkillEffect(charId) {
 
   switch (charId) {
     case 'jareth':
-      showBanner('【創生】洗版重置後降下 5 顆金珠！');
+      showBanner('【創生】洗版重置後引發元素漩渦，並轉襲 5 顆黃金珠！');
       spawnSingleBall(VIRTUAL_WIDTH/2, 60, char, true);
       break;
 
@@ -2716,7 +3058,7 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'ultima':
-      showBanner('【闇元素】盤面 10 顆角色珠化為盲珠，並消除 5 顆妨礙珠！');
+      showBanner('【闇元素】轉襲 10 顆幕盲珠，並消除 5 顆妨礙珠！');
       const normalBallsU = balls.filter(b => !b.isSpecialOrb && !b.isBlindBlack);
       normalBallsU.sort(() => Math.random() - 0.5).slice(0, 10).forEach(b => {
         b.isBlindBlack = true;
@@ -2725,7 +3067,7 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'kokumei':
-      showBanner('【混沌】生成 3 顆定時扣分綠珠！');
+      showBanner('【混沌】轉襲 3 顆定時扣分吞噬珠， 10 秒落下的角色珠大小不定！');
       for (let i = 0; i < 3; i++) {
         const targets = balls.filter(b => !b.isSpecialOrb && !b.isGreenBall);
         if (targets.length > 0) {
@@ -2735,12 +3077,22 @@ function triggerCharSkillEffect(charId) {
           spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, false, true);
         }
       }
+      
+      // 額外設定 15 秒內落下的珠子隨機大小交替
+      window.kokumeiChaosEndTimer = performance.now() + 10000;
       break;
 
     case 'proto':
-      showBanner('【摧毀】落下 4 顆黑珠與引發地震波！');
-      for (let i = 0; i < 4; i++) {
-        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, true);
+      showBanner('【摧毀】落下 3 顆大黑質珠、2 顆小吞噬珠與引發地震波！');
+      // 3 顆大黑質珠
+      for (let i = 0; i < 3; i++) {
+        const bB = spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, true);
+        resizeBallBody(bB, BALL_RADIUS * 1.25);
+      }
+      // 2 顆小吞噬珠 (isGreenBall = true)
+      for (let i = 0; i < 2; i++) {
+        const bG = spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, true);
+        resizeBallBody(bG, BALL_RADIUS * 0.65);
       }
       screenShakeTimer = 0.45;
       balls.forEach(b => {
@@ -2754,16 +3106,14 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'volt':
-      showBanner('【寂滅】落下 4 顆黑珠，產生 1.5 秒重力牽引！');
-      for (let i = 0; i < 4; i++) {
-        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, true);
+      showBanner('【寂滅】落下 6 顆小黑質珠，產生 1.5 秒重力牽引！');
+      for (let i = 0; i < 6; i++) {
+        const bV = spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, true);
+        resizeBallBody(bV, BALL_RADIUS * 0.65);
       }
-      blackHolePos = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT / 2 };
-      blackHoleTimer = 1.5;
-      break;
 
     case 'veil':
-      showBanner('【魂命】凍結 10 顆冰珠、2 顆定時自爆珠，將 2 顆場面珠轉為黑珠，盤面漂浮 2 秒！');
+      showBanner('【魂命】轉襲 10 顆冰封珠、落下 2 顆超載珠，轉襲 2 顆黑質珠，盤面漂浮 2 秒！');
       for (let i = 0; i < 10; i++) {
         const targets = balls.filter(b => !b.isSpecialOrb && !b.isFrozenBall);
         if (targets.length > 0) {
@@ -2773,7 +3123,8 @@ function triggerCharSkillEffect(charId) {
         }
       }
       for (let i = 0; i < 2; i++) {
-        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, false, true);
+        // 參數順序：x, y, forcedChar, isSpecial, isBlack, isFrozen, isGreen, isGold, isAttributePending, isSmallBall, isBlindBlack, isChainLocked, isBomb, isHourglass
+        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, true, false);
       }
       // 改變場面兩顆珠子成黑珠
       const normalBallsVeil = balls.filter(b => !b.isSpecialOrb && !b.isBlackBall);
@@ -2786,26 +3137,38 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'zoma':
-      showBanner('【侵染】落下 3 顆黑珠、2 顆定時自爆珠，並引發 2 秒引力黑洞！');
-      for (let i = 0; i < 3; i++) {
-        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, true);
-      }
+      showBanner('【侵染】轉襲 3 顆黑質珠、落下 2 顆超載珠，並製造 2 秒引力黑洞！');
+      
+      // 嚴格過濾場上一般珠子，互相避開不重疊，將 3 顆變化為黑珠
+      const cleanBallsZ = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall && !b.isFrenzy && !b.isBlackBall && !b.isFrozenBall && !b.isGreenBall && !b.isChainLocked && !b.isBomb);
+      const shuffledZ = [...cleanBallsZ].sort(() => Math.random() - 0.5);
+      const blackBatchZ = shuffledZ.slice(0, 3);
+      blackBatchZ.forEach(b => { 
+        b.isBlackBall = true; 
+        createVFX(b.position.x, b.position.y, '#757575', 10); 
+      });
+
+      // 落下 2 顆超載珠（將第13個參數 isBomb 設為 true）
       for (let i = 0; i < 2; i++) {
-        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, false, true);
+        // 參數順序：x, y, forcedChar, isSpecial, isBlack, isFrozen, isGreen, isGold, isAttributePending, isSmallBall, isBlindBlack, isChainLocked, isBomb, isHourglass
+        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, true, false);
       }
+      
       blackHolePos = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT * 0.25 };
       blackHoleTimer = 2.0;
       break;
 
     case 'kuzure':
-      showBanner('【崩壞】引發地震波，並生成 4 顆黑珠！');
+      showBanner('【崩壞】引發地震波，並轉襲 4 顆大尺寸黑質珠！');
       for (let i = 0; i < 4; i++) {
         const targets = balls.filter(b => !b.isSpecialOrb && !b.isBlackBall);
         if (targets.length > 0) {
           const target = targets[Math.floor(Math.random() * targets.length)];
           target.isBlackBall = true;
+          resizeBallBody(target, BALL_RADIUS * 1.25);
         } else {
-          spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, true);
+          const bNew = spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, true);
+          resizeBallBody(bNew, BALL_RADIUS * 1.25);
         }
       }
       engine.gravity.y = -BASE_GRAVITY;
@@ -2823,7 +3186,7 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'osae':
-      showBanner('【壓制】 8 秒內掉落小珠，縮小 15 顆珠子，落下 1 綠、2 黑、1 自爆、1 冰珠！');
+      showBanner('【壓制】 8 秒內角色珠落下尺寸變小，縮小 15 顆珠子，落下 1 顆吞噬珠、2 顆黑質珠、1 顆超載珠、1 顆冰封珠！');
       oaeSmallDropTimer = performance.now() + 8000;
       balls.slice(0, 15).forEach(b => {
         resizeBallBody(b, BALL_RADIUS * 0.65);
@@ -2831,31 +3194,32 @@ function triggerCharSkillEffect(charId) {
       spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, false, true);
       spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, true);
       spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, true);
-      spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, false, true);
+      spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, true, false);
       spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, true);
       break;
 
     case 'kage':
-      showBanner('【變質】全場角色珠轉化為黑幕盲珠！');
+      showBanner('【變質】全場角色珠轉襲為黑幕盲珠！');
       balls.forEach(b => {
         if (!b.isSpecialOrb) b.isBlindBlack = true;
       });
       break;
 
     case 'rub':
-      showBanner('【奪取】6 秒內封印權能珠，並降下 3 顆定時自爆珠與 2 黑珠！');
+      showBanner('【奪取】6 秒內封印權能珠，並落下 3 顆超載珠與 2 顆黑質珠！');
       isSkillSealActive = true;
       skillSealTimer = 6.0;
 
+      // 生成 3 顆獨立自爆珠 (isBomb = true)
       for (let i = 0; i < 3; i++) {
-        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, false, true);
+        // 參數順序：x, y, forcedChar, isSpecial, isBlack, isFrozen, isGreen, isGold, isAttributePending, isSmallBall, isBlindBlack, isChainLocked, isBomb, isHourglass
+        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, true, false);
       }
+      // 生成 2 顆獨立黑珠 (isBlackBall = true)
       for (let i = 0; i < 2; i++) {
-        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, true);
+        // 參數順序：x, y, forcedChar, isSpecial, isBlack, isFrozen, isGreen, isGold, isAttributePending, isSmallBall, isBlindBlack, isChainLocked, isBomb, isHourglass
+        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, true, false, false, false, false, false, false, false, false, false);
       }
-      break;
-
-    default:
       break;
   }
 }
@@ -2882,10 +3246,12 @@ function executeAttributePendingAction(ball) {
 
   if (el.includes('冰')) {
     const removedCount = removeRandomObstacles(5);
-    for (let i = 0; i < 5; i++) {
+    const cleanBallsIce = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending);
+    cleanBallsIce.sort(() => Math.random() - 0.5).slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 1.35));
+    for (let i = 0; i < 6; i++) { // 改為 6 顆
       spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, true);
     }
-    showBanner(`【冰元素】消除 5 顆妨礙珠，並生成 5 顆冰珠！`);
+    showBanner(`【冰元素】將 3 顆角色珠尺寸變大，消除 5 顆妨礙珠，並轉襲 6 顆冰珠！`);
     return;
   }
 
@@ -2899,21 +3265,41 @@ function executeAttributePendingAction(ball) {
         unblindCount++;
       }
     });
-    const normals = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending);
-    normals.sort(() => Math.random() - 0.5).slice(0, 3).forEach(b => {
-      resizeBallBody(b, BALL_RADIUS * 1.35);
-    });
+
+    const cleanBallsL = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrenzy);
+    const shuffledL = [...cleanBallsL].sort(() => Math.random() - 0.5);
+
+    shuffledL.slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 1.35));
+    shuffledL.slice(3, 6).forEach(b => { b.isFrenzy = true; });
+
     updateScore(400);
-    showBanner(`【光元素】破除全場黑幕，將 3 顆珠子變大並消除 5 顆妨礙珠！`);
+    showBanner(`【光元素】破除全場黑幕，將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠並消除 5 顆妨礙珠！`);
   } else if (charId === 'racoon' || el.includes('闇')) {
+    const cleanBallsD = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrenzy);
+    const shuffledD = [...cleanBallsD].sort(() => Math.random() - 0.5);
+    shuffledD.slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 0.65));
+    shuffledD.slice(3, 6).forEach(b => { b.isFrenzy = true; });
+
+    // 幕盲珠改為 15 顆
     const normalBalls = balls.filter(b => !b.isSpecialOrb && !b.isBlindBlack);
-    normalBalls.sort(() => Math.random() - 0.5).slice(0, 10).forEach(b => {
+    normalBalls.sort(() => Math.random() - 0.5).slice(0, 15).forEach(b => {
       b.isBlindBlack = true;
     });
     updateScore(200);
-    showBanner('【闇元素】將 10 顆珠子變為黑幕盲珠，並消除 5 顆妨礙珠！');
+    showBanner('【闇元素】轉襲 15 顆幕盲珠，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。');
   } else if (el.includes('火')) {
     playSynthPopSFX();
+    // 火屬性：盤面 3 顆珠子變大，變化盤面 2 顆超載珠，並消除 3 顆角色珠與 5 顆妨礙珠
+    const cleanBallsFire = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isBomb);
+    cleanBallsFire.sort(() => Math.random() - 0.5).slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 1.35));
+
+    const shuffledFire = [...cleanBallsFire].sort(() => Math.random() - 0.5);
+    shuffledFire.slice(0, 2).forEach(b => {
+      b.isBomb = true;
+      b.bombTimer = 10.0;
+      createVFX(b.position.x, b.position.y, '#ff1744', 10);
+    });
+
     const normals = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending).sort(() => Math.random() - 0.5).slice(0, 3);
     normals.forEach(b => {
       World.remove(world, b);
@@ -2921,19 +3307,37 @@ function executeAttributePendingAction(ball) {
       if (i !== -1) balls.splice(i, 1);
     });
     updateScore(300);
-    showBanner('【火元素】消除 3 顆角色珠與 5 顆妨礙珠！');
+    showBanner('【火元素】將 3 顆角色珠尺寸變大，轉襲 2 顆超載珠，消除 3 顆角色珠與 5 顆妨礙珠！');
   } else if (el.includes('風') || charId === 'owl' || charId === 'doutou' || charId === 'chitar') {
     windCenter = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT * 0.75 };
     windStormTimer = 1.5;
     lateralGravityDir = 1;
-    showBanner('【風元素】引發強風 1.5 秒，並消除 5 顆妨礙珠！');
+    // 風屬性：盤面 3 顆珠子變大，並落下 3 顆延時珠
+    const cleanBallsWind = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending);
+    cleanBallsWind.sort(() => Math.random() - 0.5).slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 1.35));
+    for (let i = 0; i < 3; i++) {
+      spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, false, true);
+    }
+    showBanner('【風元素】引發暴風，將 3 顆角色珠尺寸變大，落下 3 顆延時珠，並消除 5 顆妨礙珠！');
   } else if (el.includes('水') || charId === 'deer' || charId === 'kaiden') {
     waterBonusEndTime = performance.now() + 5000;
     zeroGravityTimer = 2.0;
     engine.gravity.y = 0.02;
-    showBanner('【水元素】5 秒內每顆珠子消除固定獲得 500 分，漂浮 2 秒並消除 5 顆妨礙珠！');
+    // 水屬性：盤面 3 顆珠子變大，變化 3 顆萬配珠
+    const cleanBallsWater = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrenzy);
+    const shuffledWater = [...cleanBallsWater].sort(() => Math.random() - 0.5);
+    shuffledWater.slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 1.35));
+    shuffledWater.slice(3, 6).forEach(b => { b.isFrenzy = true; });
+
+    showBanner('【水元素】將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，5 秒內消除每球 500 分，漂浮 2 秒並消除 5 顆妨礙珠！');
   } else if (el.includes('土')) {
     screenShakeTimer = 0.30;
+    // 土屬性：盤面 3 顆珠子變小，並落下 3 顆萬配珠
+    const cleanBallsSoil = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrenzy);
+    const shuffledSoil = [...cleanBallsSoil].sort(() => Math.random() - 0.5);
+    shuffledSoil.slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 0.65));
+    shuffledSoil.slice(3, 6).forEach(b => { b.isFrenzy = true; });
+
     balls.forEach(b => {
       if (b.position.y > VIRTUAL_HEIGHT * 0.60) {
         const upwardForce = -(Math.random() * 5.3 + 11.3);
@@ -2942,7 +3346,7 @@ function executeAttributePendingAction(ball) {
         triggerSpark(b.position.x, b.position.y, '#8bc34a');
       }
     });
-    showBanner('【土元素】發動震擊，並消除 5 顆妨礙珠！');
+    showBanner('【土元素】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠！');
   } else if (el.includes('雷') || charId === 'electric') {
     const normals = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall).sort(() => Math.random() - 0.5).slice(0, 3);
     normals.forEach(b => { 
@@ -2952,11 +3356,24 @@ function executeAttributePendingAction(ball) {
     smallCandidates.sort(() => Math.random() - 0.5).slice(0, 3).forEach(b => {
       resizeBallBody(b, BALL_RADIUS * 0.65);
     });
-    showBanner('【雷元素】將 3 顆珠子化為金珠，變小 3 顆珠子，並消除 5 顆妨礙珠！');
+
+    // 雷屬性額外：變化盤面 2 顆吞噬珠
+    const greenCandidates = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGreenBall);
+    greenCandidates.sort(() => Math.random() - 0.5).slice(0, 2).forEach(b => {
+      b.isGreenBall = true;
+    });
+
+    showBanner('【雷元素】轉襲 3 顆黃金珠、將 3 顆角色珠尺寸變小、轉襲 2 顆吞噬珠，並消除 5 顆妨礙珠！');
   } else if (el.includes('重力')) {
     engine.gravity.y = -BASE_GRAVITY;
     gravityEffectTimer = 1.0;
-    showBanner('【重力元素】反轉重力 1 秒，並消除 5 顆妨礙珠！');
+    // 重力屬性：盤面 3 顆珠子變小，並落下 3 顆延時珠
+    const cleanBallsGrav = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending);
+    cleanBallsGrav.sort(() => Math.random() - 0.5).slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 0.65));
+    for (let i = 0; i < 3; i++) {
+      spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, false, true);
+    }
+    showBanner('【重力元素】反轉重力 1 秒，將 3 顆角色珠尺寸變小，落下 3 顆延時珠，並消除 5 顆妨礙珠！');
   }
 }
 
@@ -2969,7 +3386,7 @@ function executeElimination(chain) {
   const count = chain.length;
   let gained = 0;
   
-  const cappedCount = Math.min(count, 13);
+  const cappedCount = Math.min(count, 11);
   const multiplier = 1 + (cappedCount - 3) * 0.35;
   const isWaterBonus = performance.now() < waterBonusEndTime;
   const isCritical = count >= 6 || chain.some(b => b.isGoldBall);
@@ -2993,7 +3410,7 @@ function executeElimination(chain) {
       const randomTargets = balls.filter(other => !other.isSpecialOrb).sort(() => Math.random() - 0.5).slice(0, 5);
       playSynthPopSFX();
       executeElimination(randomTargets);
-      showBanner('【震動】隨機消除 8 顆珠子！');
+      showBanner('【震動】消除 8 顆角色珠！');
       return;
     }
 
@@ -3512,6 +3929,10 @@ function mainRender(now) {
       const bigDropLeft = ((zarionBigDropEndTimer - performance.now()) / 1000).toFixed(1);
       activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(255,167,38,0.85);"><span>成長</span><span>${bigDropLeft}s</span></div>`;
     }
+    if (window.kokumeiChaosEndTimer && window.kokumeiChaosEndTimer > performance.now()) {
+      const chaosLeft = ((window.kokumeiChaosEndTimer - performance.now()) / 1000).toFixed(1);
+      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(38,50,56,0.95); border:1px solid #78909c;"><span>混沌</span><span>${chaosLeft}s</span></div>`;
+    }
     if (waterBonusEndTime > performance.now()) {
       const waterLeft = ((waterBonusEndTime - performance.now()) / 1000).toFixed(1);
       activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(41,182,246,0.85);"><span>加成</span><span>${waterLeft}s</span></div>`;
@@ -3729,22 +4150,6 @@ function mainRender(now) {
 
   drawBoardFrame();
 
-  if (rotatingBarriers.length > 0) {
-    rotatingBarriers.forEach(rb => {
-      ctx.save();
-      ctx.translate(rb.body.position.x, rb.body.position.y);
-      ctx.rotate(rb.body.angle);
-      ctx.fillStyle = 'rgba(0, 229, 255, 0.55)';
-      ctx.strokeStyle = '#00e5ff';
-      ctx.lineWidth = 3.5;
-      ctx.shadowColor = '#00e5ff';
-      ctx.shadowBlur = 14;
-      ctx.fillRect(-96, -8, 192, 16);
-      ctx.strokeRect(-96, -8, 192, 16);
-      ctx.restore();
-    });
-  }
-
   for (let i = chainLasers.length - 1; i >= 0; i--) {
     const laser = chainLasers[i];
     laser.life -= 0.055;
@@ -3828,12 +4233,16 @@ function mainRender(now) {
 
     if (b.isHourglass) {
       ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
-      ctx.lineWidth = 4; ctx.strokeStyle = '#ffeb3b'; ctx.stroke();
+      ctx.lineWidth = 4; 
+      ctx.strokeStyle = '#29b6f6'; 
+      ctx.shadowColor = '#29b6f6'; 
+      ctx.shadowBlur = 10; 
+      ctx.stroke();
     }
 
     if (b.isFrenzy) {
       ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
-      ctx.lineWidth = 4; ctx.strokeStyle = '#e91e63'; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#e07b46'; ctx.shadowColor = '#e07b46'; ctx.shadowBlur = 10; ctx.stroke();
     }
 
     if (b.isGoldBall) {
@@ -3844,11 +4253,6 @@ function mainRender(now) {
     if (b.isBlackBall) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
       ctx.lineWidth = 4; ctx.strokeStyle = '#757575'; ctx.stroke();
-    }
-
-    if (b.isLeadBall) {
-      ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 5; ctx.strokeStyle = '#37474f'; ctx.stroke();
     }
 
     if (b.isFrozenBall) {
