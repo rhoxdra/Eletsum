@@ -1641,12 +1641,18 @@ async function initPixiEngine() {
 
     pixiApp.ticker.add((ticker) => {
       const dt = ticker.deltaTime;
+      // 🌟 限制場上最多同時存在 40 個粒子，超過立即回收
+      if (activePixiParticles.length > 40) {
+        const oldP = activePixiParticles.shift();
+        if (oldP && pixiParticlesContainer) pixiParticlesContainer.removeChild(oldP);
+      }
+
       for (let i = activePixiParticles.length - 1; i >= 0; i--) {
         const p = activePixiParticles[i];
         p.x += p.vx * dt;
         p.y += p.vy * dt;
-        p.vy += 0.1 * dt;
-        p.life -= 0.03 * dt;
+        p.vy += 0.12 * dt;
+        p.life -= 0.05 * dt; // 加快消逝速度
         p.alpha = Math.max(0, p.life);
         p.scale.set(p.baseScale * p.life);
 
@@ -1728,8 +1734,8 @@ window.addEventListener('resize', resizeBoard);
 
 const engine = Engine.create({ 
   gravity: { y: BASE_GRAVITY },
-  positionIterations: 8,
-  velocityIterations: 6
+  positionIterations: 4, // 🌟 從 8 降為 4，大幅減輕手機 CPU 物理運算
+  velocityIterations: 3  // 🌟 從 6 降為 3
 });
 const world = engine.world;
 
