@@ -738,7 +738,7 @@ function playSynthPopSFX() {
     osc.frequency.setValueAtTime(200, now);
     osc.frequency.exponentialRampToValueAtTime(80, now + 0.03);
 
-    gainNode.gain.setValueAtTime(0.3, now);
+    gainNode.gain.setValueAtTime(0.7, now);
     gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
 
     osc.connect(gainNode);
@@ -1113,7 +1113,7 @@ const CHARACTER_DATABASE = [
   {
     id: 'kuzure', name: '崩', element: '崩元素', color: '#3e2723', border: '#8d6e63',
     type: 'negative', roleType: '賦形者', reqLeader: 14, reqSupport: 15,
-    desc: '【崩壞】引發地震波，並轉襲 4 顆大尺寸黑質珠。',
+    desc: '【崩壞】引發地震波，，並轉襲大尺寸的 2 顆黑質珠、 1 顆吞噬珠、 1 顆超載珠。',
     bgUrl: 'images/kuzure_bg.webp', isLandscape: true,
     cheers: ['哼，第一段打得還算說得過去！', '突破第二階段，都是有我的鐵拳開路！'],
     endingText: '完勝！只要脖子上繫著這條紅色圍巾，我這雙拳頭就會為了彼此的約定與承諾，毫無保留地揮舞到最後一刻！你心裡也有非完成不可的事嗎？那就別猶豫了，讓我們一起放手大幹一場吧！',
@@ -1441,6 +1441,7 @@ let zarionBigDropEndTimer = 0;
 let lateralGravityTimer = 0;
 let lateralGravityDir = 0;
 let windStormTimer = 0;
+let windStormSpinDir = 1; // 記錄暴風旋轉方向（1 為順時針，-1 為逆時針）
 let windCenter = { x: 200, y: 340 };
 let waterBonusEndTime = 0;
 let skillSealTimer = 0;
@@ -1450,7 +1451,8 @@ let oaeSmallDropTimer = 0;
 
 let blackHoleTimer = 0;              
 let blackHolePos = { x: 0, y: 0 };  
-let screenShakeTimer = 0;            
+let blackHoleSpinDir = 1; // 記錄黑洞旋轉方向（1 為順時針，-1 為逆時針）
+let screenShakeTimer = 0;         
 let zeroGravityTimer = 0;            
 let rotatingBarriers = [];
 let barrierTimer = 0;                
@@ -2016,7 +2018,7 @@ function renderGuidePage() {
           <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
             <div style="position:absolute; inset:0; background:rgba(76,175,80,0.55); border-radius:50%;"></div>
           </div>
-          <div style="font-size:10px;"><strong>吞噬珠</strong>：每 3 秒扣 100 分，可正常消除。</div>
+          <div style="font-size:10px;"><strong>吞噬珠</strong>：每 3 秒扣 100 分，每15秒會侵蝕 2 顆周遭的珠子，可正常消除。</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
           <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
@@ -2028,13 +2030,13 @@ function renderGuidePage() {
           <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
             <div style="position:absolute; inset:0; background:rgba(0,229,255,0.45); border-radius:50%;"></div>
           </div>
-          <div style="font-size:10px;"><strong>冰封珠</strong>：被冰結，點擊後可解凍復原。</div>
+          <div style="font-size:10px;"><strong>冰封珠</strong>：被冰結，每 15 秒會侵蝕 3 顆周遭的珠子，點擊後可解凍復原。</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
             <div style="position:absolute; inset:-2px; border:2px solid #ff1744; border-radius:50%;"></div>
           </div>
-          <div style="font-size:10px;"><strong>超載珠</strong>：10秒倒數炸彈，歸零未處理每顆扣1500分。</div>
+          <div style="font-size:10px;"><strong>超載珠</strong>： 15 秒倒數炸彈，歸零時未消除則每顆扣 1500 分，並侵蝕 1 顆周遭的珠子，可正常消除。</div>
         </div>
       `;
       break;
@@ -2291,7 +2293,7 @@ function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false, isBlackB
   body.isChainLocked = isChainLocked;
   body.chainLockCount = isChainLocked ? 2 : 0;
   body.isBomb = isBomb;
-  body.bombTimer = isBomb ? 10.0 : 0; 
+  body.bombTimer = isBomb ? 15.0 : 0; 
   body.isHourglass = isHourglass;
   body.isFrenzy = isFrenzy;
   body.isShield = isShield;
@@ -2418,6 +2420,101 @@ setInterval(() => {
     }
   }
 }, 3000);
+
+// 冰封珠與吞噬珠擴散機制（每 15 秒一次，前 2 秒觸發預警特效）
+setInterval(() => {
+  if (gameStatus !== 'PLAYING' || isCastingSkill || isNegativeSealActive) return;
+
+  const currentFrozenSources = balls.filter(b => b.isFrozenBall);
+  const currentGreenSources = balls.filter(b => b.isGreenBall);
+
+  const willFreeze = currentFrozenSources.length > 0;
+  const willGreen = currentGreenSources.length > 0;
+
+  if (!willFreeze && !willGreen) return;
+
+  // 1. 預警階段（第 13 秒）：挑選即將感染的目標並施加預警特效
+  let targetsToFreeze = [];
+  let targetsToGreen = [];
+
+  if (willFreeze) {
+    // 來源珠震盪發光提醒
+    currentFrozenSources.forEach(src => {
+      createShockwave(src.position.x, src.position.y, '#00e5ff');
+      createVFX(src.position.x, src.position.y, '#00e5ff', 12);
+    });
+    // 挑選 3 顆即將被冰封的目標
+    const freezePool = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrozenBall && !b.isBlackBall && !b.isBomb);
+    targetsToFreeze = freezePool.sort(() => Math.random() - 0.5).slice(0, 3);
+    targetsToFreeze.forEach(t => {
+      createVFX(t.position.x, t.position.y, '#00e5ff', 16);
+      triggerSpark(t.position.x, t.position.y, '#ffffff');
+    });
+  }
+
+  if (willGreen) {
+    // 來源珠震盪發光提醒
+    currentGreenSources.forEach(src => {
+      createShockwave(src.position.x, src.position.y, '#69f0ae');
+      createVFX(src.position.x, src.position.y, '#69f0ae', 12);
+    });
+    // 挑選 2 顆即將被吞噬的目標（避開已經被選定要冰封的目標）
+    const greenPool = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGreenBall && !b.isBlackBall && !b.isBomb && !targetsToFreeze.includes(b));
+    targetsToGreen = greenPool.sort(() => Math.random() - 0.5).slice(0, 2);
+    targetsToGreen.forEach(t => {
+      createVFX(t.position.x, t.position.y, '#69f0ae', 16);
+      triggerSpark(t.position.x, t.position.y, '#ffffff');
+    });
+  }
+
+  // 橫幅與音效預警
+  if (willFreeze && willGreen) {
+    showBanner('⚠️ 警告：寒霜與吞噬正在凝聚，2 秒後擴散！');
+  } else if (willFreeze) {
+    showBanner('⚠️ 警告：極寒能量正在凝聚，2 秒後擴散！');
+  } else if (willGreen) {
+    showBanner('⚠️ 警告：吞噬能量正在蔓延，2 秒後擴散！');
+  }
+  playSynthPopSFX();
+
+  // 2. 結算階段：2 秒預警後（滿 15 秒）正式轉化
+  setTimeout(() => {
+    // 若遊戲已中斷或被高和「恆定」免疫，取消轉化
+    if (gameStatus !== 'PLAYING' || isNegativeSealActive) return;
+
+    // 正式轉化冰封珠
+    targetsToFreeze.forEach(b => {
+      if (balls.includes(b) && !b.isFrozenBall) {
+        b.isFrozenBall = true;
+        b.isBlackBall = false;
+        b.isGreenBall = false;
+        b.isGoldBall = false;
+        b.isFrenzy = false;
+        b.isHourglass = false;
+        createVFX(b.position.x, b.position.y, '#00e5ff', 18);
+        spawnPixiExplosion(b.position.x, b.position.y, 0x00e5ff, 20);
+      }
+    });
+
+    // 正式轉化吞噬珠
+    targetsToGreen.forEach(b => {
+      if (balls.includes(b) && !b.isGreenBall) {
+        b.isGreenBall = true;
+        b.isBlackBall = false;
+        b.isFrozenBall = false;
+        b.isGoldBall = false;
+        b.isFrenzy = false;
+        b.isHourglass = false;
+        createVFX(b.position.x, b.position.y, '#69f0ae', 18);
+        spawnPixiExplosion(b.position.x, b.position.y, 0x69f0ae, 20);
+      }
+    });
+
+    if (targetsToFreeze.length > 0 || targetsToGreen.length > 0) {
+      playSynthPopSFX();
+    }
+  }, 2000);
+}, 15000);
 
 setInterval(() => {
   if (gameStatus === 'PLAYING' && balls.length < MAX_BALLS && !isCastingSkill) {
@@ -2957,7 +3054,7 @@ function executeSingleSkill(orb) {
     const cleanBallsGz = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isBomb);
     cleanBallsGz.sort(() => Math.random() - 0.5).slice(0, 2).forEach(b => {
       b.isBomb = true;
-      b.bombTimer = 10.0;
+      b.bombTimer = 15.0;
       createVFX(b.position.x, b.position.y, '#ff1744', 10);
     });
 
@@ -3087,9 +3184,8 @@ function triggerCharSkillEffect(charId) {
     case 'kokumei':
       showBanner('【混沌】轉襲 4 顆吞噬珠，並引發 10 秒混沌動態尺寸！');
       for (let i = 0; i < 4; i++) {
-        const targets = balls.filter(b => !b.isSpecialOrb && !b.isGreenBall);
+        const targets = balls.filter(b => !b.isSpecialOrb && !b.isGreenBall && !b.isBlackBall);
         if (targets.length > 0) {
-          const target = targets[Math.floor(Math.random() * targets.length)];
           target.isGreenBall = true;
         } else {
           spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, false, true);
@@ -3135,7 +3231,7 @@ function triggerCharSkillEffect(charId) {
     case 'veil':
       showBanner('【魂命】轉襲 10 顆冰封珠、落下 2 顆超載珠，轉襲 2 顆黑質珠，盤面漂浮 2 秒！');
       for (let i = 0; i < 10; i++) {
-        const targets = balls.filter(b => !b.isSpecialOrb && !b.isFrozenBall);
+        const targets = balls.filter(b => !b.isSpecialOrb && !b.isFrozenBall && !b.isBlackBall);
         if (targets.length > 0) {
           targets[Math.floor(Math.random() * targets.length)].isFrozenBall = true;
         } else {
@@ -3165,6 +3261,8 @@ function triggerCharSkillEffect(charId) {
       const blackBatchZ = shuffledZ.slice(0, 3);
       blackBatchZ.forEach(b => { 
         b.isBlackBall = true; 
+        b.isFrozenBall = false; // 清除冰封
+        b.isGreenBall = false;  // 清除吞噬
         createVFX(b.position.x, b.position.y, '#757575', 10); 
       });
 
@@ -3179,18 +3277,53 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'kuzure':
-      showBanner('【崩壞】引發地震波，並轉襲 4 顆大尺寸黑質珠！');
-      for (let i = 0; i < 4; i++) {
-        const targets = balls.filter(b => !b.isSpecialOrb && !b.isBlackBall);
-        if (targets.length > 0) {
-          const target = targets[Math.floor(Math.random() * targets.length)];
-          target.isBlackBall = true;
-          resizeBallBody(target, BALL_RADIUS * 1.25);
+      showBanner('【崩壞】引發地震波，並轉襲大尺寸的 2 顆黑質珠、 1 顆吞噬珠、 1 顆超載珠！');
+      // 隨機選出 4 顆一般珠子進行不同效果分配
+      const availableCandidates = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending);
+      const shuffledTargets = [...availableCandidates].sort(() => Math.random() - 0.5);
+
+      // 1. 轉襲 2 顆大尺寸黑質珠
+      for (let i = 0; i < 2; i++) {
+        let t = shuffledTargets.pop();
+        if (t) {
+          t.isBlackBall = true;
+          t.isFrozenBall = false;
+          t.isGreenBall = false;
+          t.isBomb = false;
         } else {
-          const bNew = spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, true);
-          resizeBallBody(bNew, BALL_RADIUS * 1.25);
+          t = spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, true);
         }
+        resizeBallBody(t, BALL_RADIUS * 1.25);
+        createVFX(t.position.x, t.position.y, '#757575', 10);
       }
+
+      // 2. 轉襲 1 顆大尺寸吞噬珠
+      let greenTarget = shuffledTargets.pop();
+      if (greenTarget) {
+        greenTarget.isGreenBall = true;
+        greenTarget.isBlackBall = false;
+        greenTarget.isFrozenBall = false;
+        greenTarget.isBomb = false;
+      } else {
+        greenTarget = spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, false, true);
+      }
+      resizeBallBody(greenTarget, BALL_RADIUS * 1.25);
+      createVFX(greenTarget.position.x, greenTarget.position.y, '#69f0ae', 10);
+
+      // 3. 轉襲 1 顆大尺寸超載珠（15秒）
+      let bombTarget = shuffledTargets.pop();
+      if (bombTarget) {
+        bombTarget.isBomb = true;
+        bombTarget.bombTimer = 15.0;
+        bombTarget.isBlackBall = false;
+        bombTarget.isFrozenBall = false;
+        bombTarget.isGreenBall = false;
+      } else {
+        bombTarget = spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, true);
+      }
+      resizeBallBody(bombTarget, BALL_RADIUS * 1.25);
+      createVFX(bombTarget.position.x, bombTarget.position.y, '#ff1744', 12);
+
       engine.gravity.y = -BASE_GRAVITY;
       gravityEffectTimer = 0.5;
 
@@ -3316,7 +3449,7 @@ function executeAttributePendingAction(ball) {
     const shuffledFire = [...cleanBallsFire].sort(() => Math.random() - 0.5);
     shuffledFire.slice(0, 2).forEach(b => {
       b.isBomb = true;
-      b.bombTimer = 10.0;
+      b.bombTimer = 15.0;
       createVFX(b.position.x, b.position.y, '#ff1744', 10);
     });
 
@@ -3377,8 +3510,8 @@ function executeAttributePendingAction(ball) {
       resizeBallBody(b, BALL_RADIUS * 0.65);
     });
 
-    // 雷屬性額外：變化盤面 2 顆吞噬珠
-    const greenCandidates = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGreenBall);
+    // 雷屬性額外：變化盤面 2 顆吞噬珠（避開黑質珠）
+    const greenCandidates = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGreenBall && !b.isBlackBall);
     greenCandidates.sort(() => Math.random() - 0.5).slice(0, 2).forEach(b => {
       b.isGreenBall = true;
     });
@@ -3821,7 +3954,7 @@ function renderGallery() {
       card.innerHTML = `
         <img src="images/${c.id}.webp" onerror="this.src='images/background.webp'" class="leader-avatar-thumb">
         <div style="font-size:12px; font-weight:bold; color:#fff;">${c.name}</div>
-        <div style="font-size:10px; color:#ff9800; margin-top:2px;">尚未解鎖</div>
+        <div style="font-size:10px; color:#ff9800; margin-top:2px;">${c.cleared ? '常規結局' : '尚未解鎖'}</div>
         <div style="font-size:10px; color:${c.cleared ? '#45f3ff' : '#666'}; margin-top:6px;">${c.cleared ? '★ 重溫結局' : '🔒 尚未通關'}</div>
       `;
       if (c.cleared) {
@@ -4026,12 +4159,17 @@ function mainRender(now) {
         const dx = b.position.x - cx;
         const dy = b.position.y - cy;
         const dist = Math.hypot(dx, dy) || 1;
-        const forceFactor = 0.0008;
+        const forceFactor = 0.0007;
+        const spinFactor = 0.0015 * windStormSpinDir; // 依當前方向加入切向旋轉力
         Body.applyForce(b, b.position, {
-          x: (dx / dist) * forceFactor * b.mass + (Math.random() - 0.5) * 0.0005,
-          y: (dy / dist) * forceFactor * b.mass - 0.0004 * b.mass
+          x: ((-dy / dist) * spinFactor + (dx / dist) * forceFactor) * b.mass + (Math.random() - 0.5) * 0.0005,
+          y: ((dx / dist) * spinFactor + (dy / dist) * forceFactor) * b.mass - 0.0004 * b.mass
         });
       });
+      if (windStormTimer <= 0) {
+        windStormSpinDir *= -1; // 結束後切換下一次的旋轉方向
+        balls.forEach(b => { b.friction = 0.18; });
+      }
     } else {
       balls.forEach(b => { b.friction = 0.18; });
     }
@@ -4063,8 +4201,43 @@ function mainRender(now) {
           createVFX(b.position.x, b.position.y, '#ff1744', 22);
           spawnPixiExplosion(b.position.x, b.position.y, 0xff1744, 30);
           updateScore(-1500);
-          showBanner('【超載珠引爆】一顆扣除 1500 分！');
-          b.isBomb = false;
+
+          // 1. 徹底消除引爆的超載珠本體並移出盤面
+          World.remove(world, b);
+          balls.splice(i, 1);
+
+          // 2. 判斷高和「恆定」免疫狀態
+          if (isNegativeSealActive) {
+            showBanner('【超載珠引爆】扣除 1500 分！（恆定抵消擴散）');
+          } else {
+            showBanner('【超載珠引爆】扣除 1500 分並引發連鎖擴散！');
+
+            // 3. 從場上剩餘的球中選出 1 顆可感染的目標
+            const infectCandidates = balls.filter(target => 
+              !target.isSpecialOrb && 
+              !target.isAttributePending && 
+              !target.isBomb && 
+              !target.isBlackBall
+            );
+            
+            infectCandidates.sort(() => Math.random() - 0.5).slice(0, 1).forEach(target => {
+              target.isBomb = true;
+              target.bombTimer = 15.0;
+              // 清除所有既有妨礙與增益標籤，避免狀態衝突
+              target.isBlackBall = false;
+              target.isFrozenBall = false;
+              target.isGreenBall = false;
+              target.isGoldBall = false;
+              target.isChainLocked = false;
+              target.isFrenzy = false;
+              target.isHourglass = false;
+              target.isBlindBlack = false;
+              createVFX(target.position.x, target.position.y, '#ff1744', 14);
+            });
+          }
+
+          // 補回被炸掉消除的珠子，維持盤面平衡
+          setTimeout(() => refillBalls(MAX_BALLS), 300);
         }
       }
     }
@@ -4080,7 +4253,7 @@ function mainRender(now) {
         const dist = Math.hypot(dx, dy) || 1;
         if (dist > 12) {
           const pull = 0.003 * b.mass;
-          const spin = 0.0015 * b.mass;
+          const spin = 0.0015 * b.mass * blackHoleSpinDir; // 依據當前方向順/逆時針旋轉
           const antiGravity = b.position.y > VIRTUAL_HEIGHT * 0.6 ? -0.0008 * b.mass : 0; 
           Body.applyForce(b, b.position, {
             x: (dx / dist) * pull + (-dy / dist) * spin,
@@ -4089,6 +4262,7 @@ function mainRender(now) {
         }
       });
       if (blackHoleTimer <= 0) {
+        blackHoleSpinDir *= -1; // 每次發動完畢後交替順/逆時針方向
         balls.forEach(b => { b.friction = 0.18; });
         createVFX(blackHolePos.x, blackHolePos.y, '#9c27b0', 28);
         spawnPixiExplosion(blackHolePos.x, blackHolePos.y, 0x9c27b0, 40);
