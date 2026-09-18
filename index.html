@@ -511,22 +511,86 @@
       border-color: #444;
       color: #777;
     }
+
+    .music-info-panel {
+      cursor: pointer;
+    }
+    .music-info-panel:hover {
+      border-color: #e07b46;
+    }
+
+    #modal-music-select {
+      z-index: 210;
+    }
+    .music-list-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 12px 0;
+      max-height: 320px;
+      overflow-y: auto;
+      overflow-x: hidden; /* 強制鎖死橫向捲軸，防止任何水平抖動 */
+      padding-right: 4px;  /* 預留右側空間給垂直滾動條，避免壓到文字 */
+      text-align: left;
+    }
+    .music-track-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(21, 19, 20, 0.85);
+      border: 1px solid rgba(237, 229, 216, 0.15);
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      font-size: 12px;
+      color: #ede5d8;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    .music-track-item:hover {
+      background: rgba(224, 123, 70, 0.25);
+      border-color: rgba(224, 123, 70, 0.7);
+      box-shadow: 0 0 8px rgba(224, 123, 70, 0.3);
+      /* 移除 translateX(4px)，改用微光暈與亮度提升反饋，寬度絕對固定不超出 */
+    }
+    .music-track-item.playing {
+      border-color: #e07b46;
+      background: rgba(65, 34, 25, 0.95);
+      font-weight: bold;
+      box-shadow: 0 0 10px rgba(224, 123, 70, 0.4);
+      color: #fff;
+    }
     
   </style>
 </head>
 <body id="app-body">
 
 <div class="music-player-container">
-    <button id="music-toggle-btn" class="music-btn" onclick="togglePlayMusic(); playSynthPopSFX();" title="播放/暫停背景音樂">🎵</button>
-    <div id="music-info-panel" class="music-info-panel">
-        <span id="music-title" class="music-title-text">點擊播放 BGM</span>
-        <div class="music-controls">
+    <!-- 原本的播放按鈕直接替換為開啟選單的按鈕 -->
+    <button id="music-menu-btn" class="music-btn" onclick="openMusicSelectModal(); playSynthPopSFX();" title="開啟曲目選單">🎵</button>
+    <div id="music-info-panel" class="music-info-panel" onclick="openMusicSelectModal(); playSynthPopSFX();" title="點擊開啟選單">
+        <span id="music-title" class="music-title-text">點擊選擇 BGM</span>
+        <div class="music-controls" onclick="event.stopPropagation()">
             <button class="music-sub-btn" onclick="playPrevTrack(); playSynthPopSFX();" title="上一首">⏮</button>
+            <button class="music-sub-btn" onclick="togglePlayMusic(); playSynthPopSFX();" id="music-play-pause-btn" title="播放/暫停">▶</button>
             <button class="music-sub-btn" onclick="playNextTrack(); playSynthPopSFX();" title="下一首">⏭</button>
         </div>
     </div>
 </div>
 <audio id="bgm-audio" onended="playNextTrack()"></audio>
+
+<!-- PC/平板背景音樂自選彈窗 -->
+<div id="modal-music-select" class="overlay-modal" style="display: none;">
+  <div class="modal-card" style="max-width: 380px;">
+    <h3 style="color: #e07b46; margin-bottom: 4px;">曲目選擇</h3>
+    <p style="font-size: 11px; color: #aaa; margin-bottom: 10px;">點擊直接切換並播放指定音樂</p>
+    <div class="music-list-grid" id="music-track-list"></div>
+    <div style="margin-top: 14px;">
+      <button class="btn sub" style="width: 100%; margin: 0;" onclick="closeMusicSelectModal(); playSynthPopSFX();">關閉</button>
+    </div>
+  </div>
+</div>
 
 <div id="bg-layer">
   <div id="bg-main" class="bg-image active"></div>
@@ -753,18 +817,20 @@ function playSynthPopSFX() {
 
 /* ================= 12 首背景音樂播放器邏輯 ================= */
 const playlist = [
-    { title: "嵐光城的早晨慢跑", src: "music/bgm1.mp3" },
-    { title: "尼爾桑夏日時光", src: "music/bgm2.mp3" },
-    { title: "聚學舍午後一隅", src: "music/bgm3.mp3" },
-    { title: "艾瑞爾城市政廳", src: "music/bgm4.mp3" },
-    { title: "蕾寶來電", src: "music/bgm5.mp3" },
-    { title: "詛碼團基地", src: "music/bgm6.mp3" },
-    { title: "夜晨奇境遊樂園", src: "music/bgm7.mp3" },
-    { title: "荒野焰嵐團練室", src: "music/bgm8.mp3" },
-    { title: "裏網世界", src: "music/bgm9.mp3" },
-    { title: "瞭望燼鐵鎮", src: "music/bgm10.mp3" },
-    { title: "元素之源", src: "music/bgm11.mp3" },
-    { title: "豹飲豹食DJ台", src: "music/bgm12.mp3" }
+    { title: "灼嵐火", src: "music/bgm1.mp3" },
+    { title: "滄月心", src: "music/bgm2.mp3" },
+    { title: "嚎影", src: "music/bgm12.mp3" },
+    { title: "The Iron Ascent", src: "music/bgm4.mp3" },
+    { title: "嵐光城的早晨慢跑", src: "music/bgm5.mp3" },
+    { title: "尼爾桑夏日時光", src: "music/bgm6.mp3" },
+    { title: "聚學舍午後一隅", src: "music/bgm7.mp3" },
+    { title: "艾瑞爾城市政廳", src: "music/bgm8.mp3" },
+    { title: "蕾寶來電", src: "music/bgm9.mp3" },
+    { title: "詛碼團基地", src: "music/bgm10.mp3" },
+    { title: "夜晨奇境遊樂園", src: "music/bgm11.mp3" },
+    { title: "裏網世界", src: "music/bgm12.mp3" },
+    { title: "瞭望燼鐵鎮", src: "music/bgm13.mp3" },
+    { title: "元素之源", src: "music/bgm14.mp3" }
 ];
 
 let currentTrackIndex = 0;
@@ -780,32 +846,99 @@ function loadTrack(index) {
         if (titleElem) {
             titleElem.innerText = playlist[index].title;
         }
+        renderMusicTrackList(); // 當前播放曲目更新時，同步更新選單高亮狀態
+    }
+}
+
+// 點擊音樂資訊面板（手機、平板、PC 皆可開啟選單）
+function handleMusicPanelClick() {
+    playSynthPopSFX();
+    openMusicSelectModal();
+}
+
+// 打開音樂自選選單
+function openMusicSelectModal() {
+    renderMusicTrackList();
+    document.getElementById('modal-music-select').style.display = 'flex';
+}
+
+// 關閉音樂自選選單
+function closeMusicSelectModal() {
+    document.getElementById('modal-music-select').style.display = 'none';
+}
+
+// 渲染音樂選單清單
+function renderMusicTrackList() {
+    const listEl = document.getElementById('music-track-list');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    playlist.forEach((track, idx) => {
+        const item = document.createElement('div');
+        const isCurrent = (idx === currentTrackIndex);
+        item.className = `music-track-item ${isCurrent ? 'playing' : ''}`;
+        item.innerHTML = `
+            <span>${idx + 1}. ${track.title}</span>
+            <span style="font-size: 11px; opacity: 0.85;">${isCurrent && isMusicPlaying ? '▶ 播放中' : (isCurrent ? '⏸ 就緒' : '點擊播放')}</span>
+        `;
+        item.onclick = () => {
+            selectAndPlayTrack(idx);
+        };
+        listEl.appendChild(item);
+    });
+}
+
+// 同步更新播放控制按鈕狀態圖示
+function updatePlayControlUI() {
+    const playPauseBtn = document.getElementById('music-play-pause-btn');
+    const menuBtn = document.getElementById('music-menu-btn');
+    if (playPauseBtn) {
+        playPauseBtn.innerText = isMusicPlaying ? "⏸" : "▶";
+    }
+    if (menuBtn) {
+        // 播放中時選單圓鈕外框發微光提示
+        menuBtn.style.borderColor = isMusicPlaying ? "#e07b46" : "rgba(224, 123, 70, 0.5)";
+    }
+}
+
+// 直接點播指定曲目
+function selectAndPlayTrack(index) {
+    initAudioContext();
+    currentTrackIndex = index;
+    loadTrack(currentTrackIndex);
+
+    const audio = document.getElementById('bgm-audio');
+    if (audio) {
+        audio.play().then(() => {
+            isMusicPlaying = true;
+            updatePlayControlUI();
+            renderMusicTrackList();
+        }).catch(err => console.log("點播失敗：", err));
     }
 }
 
 function togglePlayMusic() {
     initAudioContext();
     const audio = document.getElementById('bgm-audio');
-    const btn = document.getElementById('music-toggle-btn');
     if (!audio) return;
 
     if (!audio.src || audio.src.endsWith('.html') || audio.src === window.location.href) {
-        currentTrackIndex = Math.floor(Math.random() * playlist.length);
+        currentTrackIndex = 0; // 取消隨機，由第一首開始
         loadTrack(currentTrackIndex);
     }
 
     if (isMusicPlaying) {
         audio.pause();
-        btn.innerText = "🎵";
-        btn.style.borderColor = "rgba(56, 189, 248, 0.5)";
         isMusicPlaying = false;
+        updatePlayControlUI();
+        renderMusicTrackList();
     } else {
         const playPromise = audio.play();
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                btn.innerText = "⏸";
-                btn.style.borderColor = "#34d399";
                 isMusicPlaying = true;
+                updatePlayControlUI();
+                renderMusicTrackList();
             }).catch(error => {
                 console.error("音樂播放失敗：", error);
             });
@@ -814,20 +947,30 @@ function togglePlayMusic() {
 }
 
 function playNextTrack() {
+    // 循序切換下一首，若為最後一首自動循環回第 1 首
     currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
     loadTrack(currentTrackIndex);
     const audio = document.getElementById('bgm-audio');
-    if (isMusicPlaying && audio) {
-        audio.play().catch(err => console.log("切換下一首失敗：", err));
+    if (audio) {
+        audio.play().then(() => {
+            isMusicPlaying = true;
+            updatePlayControlUI();
+            renderMusicTrackList();
+        }).catch(err => console.log("切換下一首失敗：", err));
     }
 }
 
 function playPrevTrack() {
+    // 循序切換上一首，若為第 1 首循環至最後一首
     currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
     loadTrack(currentTrackIndex);
     const audio = document.getElementById('bgm-audio');
-    if (isMusicPlaying && audio) {
-        audio.play().catch(err => console.log("切換上一首失敗：", err));
+    if (audio) {
+        audio.play().then(() => {
+            isMusicPlaying = true;
+            updatePlayControlUI();
+            renderMusicTrackList();
+        }).catch(err => console.log("切換上一首失敗：", err));
     }
 }
 
