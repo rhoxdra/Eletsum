@@ -568,13 +568,13 @@
 
 <div class="music-player-container">
     <!-- 原本的播放按鈕直接替換為開啟選單的按鈕 -->
-    <button id="music-menu-btn" class="music-btn" onclick="openMusicSelectModal(); playSynthPopSFX();" title="開啟曲目選單">🎵</button>
+    <button id="music-menu-btn" class="music-btn" onclick="openMusicSelectModal(); playSynthPopSFX();" title="開啟曲目選單">♫</button>
     <div id="music-info-panel" class="music-info-panel" onclick="openMusicSelectModal(); playSynthPopSFX();" title="點擊開啟選單">
         <span id="music-title" class="music-title-text">點擊選擇 BGM</span>
         <div class="music-controls" onclick="event.stopPropagation()">
-            <button class="music-sub-btn" onclick="playPrevTrack(); playSynthPopSFX();" title="上一首">⏮</button>
+            <button class="music-sub-btn" onclick="playPrevTrack(); playSynthPopSFX();" title="上一首">|◀</button>
             <button class="music-sub-btn" onclick="togglePlayMusic(); playSynthPopSFX();" id="music-play-pause-btn" title="播放/暫停">▶</button>
-            <button class="music-sub-btn" onclick="playNextTrack(); playSynthPopSFX();" title="下一首">⏭</button>
+            <button class="music-sub-btn" onclick="playNextTrack(); playSynthPopSFX();" title="下一首">▶|</button>
         </div>
     </div>
 </div>
@@ -819,7 +819,7 @@ function playSynthPopSFX() {
 const playlist = [
     { title: "灼嵐火", src: "music/bgm1.mp3" },
     { title: "滄月心", src: "music/bgm2.mp3" },
-    { title: "嚎影", src: "music/bgm12.mp3" },
+    { title: "嚎影", src: "music/bgm3.mp3" },
     { title: "The Iron Ascent", src: "music/bgm4.mp3" },
     { title: "嵐光城的早晨慢跑", src: "music/bgm5.mp3" },
     { title: "尼爾桑夏日時光", src: "music/bgm6.mp3" },
@@ -2353,7 +2353,7 @@ function startStage(stage, shouldReshuffle = true) {
 
   const variantTitleStr = selectedVariant ? `【${selectedVariant.title}】` : '';
   const goalPrompt = isSkillCountGoal ? `釋放 ${targetSkillCount} 次隊長權能` : `得分 ${stageTargetScore}分`;
-  setDialogue(selectedLeader.name, `🎵 「第 ${stage} 階段 ${variantTitleStr} 開始！本關目標：${goalPrompt}。」`);
+  setDialogue(selectedLeader.name, `「第 ${stage} 階段 ${variantTitleStr} 開始！本關目標：${goalPrompt}。」`);
   gameStatus = 'PLAYING';
   
   spawnOpeningWave(MAX_BALLS);
@@ -2612,11 +2612,11 @@ setInterval(() => {
 
   // 橫幅與音效預警
   if (willFreeze && willGreen) {
-    showBanner('⚠️ 警告：寒霜與吞噬正在凝聚，2 秒後擴散！');
+    showBanner('〔!〕警告：寒霜與吞噬正在凝聚，2 秒後擴散！');
   } else if (willFreeze) {
-    showBanner('⚠️ 警告：極寒能量正在凝聚，2 秒後擴散！');
+    showBanner('〔!〕警告：極寒能量正在凝聚，2 秒後擴散！');
   } else if (willGreen) {
-    showBanner('⚠️ 警告：吞噬能量正在蔓延，2 秒後擴散！');
+    showBanner('〔!〕警告：吞噬能量正在蔓延，2 秒後擴散！');
   }
   playSynthPopSFX();
 
@@ -3782,13 +3782,13 @@ function triggerMilestone(charId) {
   }
   if (char.roleType === '賦形者') {
     triggerCharSkillEffect(charId);
-    setDialogue(char.name, `🎵 「${char.desc}」`);
+    setDialogue(char.name, `「${char.desc}」`);
   } else if (char.roleType === '無能力者') {
     triggerCharSkillEffect(charId);
-    setDialogue(char.name, `🎵 「發動應援效果！」`);
+    setDialogue(char.name, `「發動應援效果！」`);
   } else {
     applyAttributeEffect(char);
-    setDialogue(char.name, `🎵 「${char.element}屬性元素已充能完畢！」`);
+    setDialogue(char.name, `「${char.element}屬性元素已充能完畢！」`);
   }
 }
 
@@ -4084,7 +4084,7 @@ function renderGallery() {
           <img src="images/${c.id}.webp" onerror="this.src='images/background.webp'" class="leader-avatar-thumb">
           <div style="font-size:12px; font-weight:bold; color:#fff;">${c.name}</div>
           <div style="font-size:10px; color:#ff9800; margin-top:2px;">${v.title}</div>
-          <div style="font-size:10px; color:${v.cleared ? '#45f3ff' : '#666'}; margin-top:6px;">${v.cleared ? '★ 重溫結局' : '🔒 尚未通關'}</div>
+          <div style="font-size:10px; color:${v.cleared ? '#45f3ff' : '#666'}; margin-top:6px;">${v.cleared ? '★ 重溫結局' : '[未解鎖] 尚未通關'}</div>
         `;
         if (v.cleared) {
           card.onclick = () => { playSynthPopSFX(); galleryModal.style.display = 'none'; launchEndingPresentation(c, v); };
@@ -4095,11 +4095,11 @@ function renderGallery() {
       const card = document.createElement('div');
       card.className = `gallery-card ${c.cleared ? 'unlocked' : 'locked'}`;
       card.innerHTML = `
-        <img src="images/${c.id}.webp" onerror="this.src='images/background.webp'" class="leader-avatar-thumb">
-        <div style="font-size:12px; font-weight:bold; color:#fff;">${c.name}</div>
-        <div style="font-size:10px; color:#ff9800; margin-top:2px;">${c.cleared ? '常規結局' : '尚未解鎖'}</div>
-        <div style="font-size:10px; color:${c.cleared ? '#45f3ff' : '#666'}; margin-top:6px;">${c.cleared ? '★ 重溫結局' : '🔒 尚未通關'}</div>
-      `;
+          <img src="images/${c.id}.webp" onerror="this.src='images/background.webp'" class="leader-avatar-thumb">
+          <div style="font-size:12px; font-weight:bold; color:#fff;">${c.name}</div>
+          <div style="font-size:10px; color:#ff9800; margin-top:2px;">${c.cleared ? '常規結局' : '尚未解鎖'}</div>
+          <div style="font-size:10px; color:${c.cleared ? '#45f3ff' : '#666'}; margin-top:6px;">${c.cleared ? '★ 重溫結局' : '[未解鎖] 尚未通關'}</div>
+        `;
       if (c.cleared) {
         card.onclick = () => { playSynthPopSFX(); galleryModal.style.display = 'none'; launchEndingPresentation(c, null); };
       }
