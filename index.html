@@ -1611,6 +1611,7 @@ let hitStopUntil = 0;
 const FUSION_MAX_SELECT = 10;
 let fusionBeams = null;
 let isCastingSkill = false;
+let lastDomUpdateTime = 0; // 記錄上一次更新 DOM 的時間
 
 let manualDropRemaining = 5;
 let barrierItemRemaining = 1;
@@ -1734,8 +1735,9 @@ window.addEventListener('resize', resizeBoard);
 
 const engine = Engine.create({ 
   gravity: { y: BASE_GRAVITY },
-  positionIterations: 4, // 🌟 從 8 降為 4，大幅減輕手機 CPU 物理運算
-  velocityIterations: 3  // 🌟 從 6 降為 3
+  positionIterations: 4,
+  velocityIterations: 3,
+  enableSleeping: true // 🌟 開啟物理物件睡眠，靜止的小球不耗費運算資源
 });
 const world = engine.world;
 
@@ -4208,48 +4210,52 @@ function mainRender(now) {
 
   const effectTimerContainer = document.getElementById('active-effect-timer');
   if (effectTimerContainer && gameStatus === 'PLAYING') {
-    let activeEffectsHtml = '';
-    
-    if (windStormTimer > 0) {
-      activeEffectsHtml += `<div class="effect-timer-node"><span>風壓</span><span>${windStormTimer.toFixed(1)}s</span></div>`;
-    }
-    if (isNegativeSealActive && negativeSealTimer > 0) {
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(21,101,192,0.85);"><span>恆定</span><span>${negativeSealTimer.toFixed(1)}s</span></div>`;
-    }
-    if (isSkillSealActive && skillSealTimer > 0) {
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(26,35,126,0.85);"><span>奪取</span><span>${skillSealTimer.toFixed(1)}s</span></div>`;
-    }
-    if (zeroGravityTimer > 0) {
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(0,229,255,0.75);"><span>漂浮</span><span>${zeroGravityTimer.toFixed(1)}s</span></div>`;
-    }
-    if (blackHoleTimer > 0) {
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(123,31,162,0.85);"><span>引力</span><span>${blackHoleTimer.toFixed(1)}s</span></div>`;
-    }
-    if (gravityEffectTimer > 0) {
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(85,85,85,0.85);"><span>重力</span><span>${gravityEffectTimer.toFixed(1)}s</span></div>`;
-    }
-    if (oaeSmallDropTimer > performance.now()) {
-      const smallLeft = ((oaeSmallDropTimer - performance.now()) / 1000).toFixed(1);
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(130,119,23,0.85);"><span>壓制</span><span>${smallLeft}s</span></div>`;
-    }
-    if (shieldActiveEndTime > performance.now()) {
-      const shieldLeft = ((shieldActiveEndTime - performance.now()) / 1000).toFixed(1);
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(0,230,118,0.85);"><span>恆定</span><span>${shieldLeft}s</span></div>`;
-    }
-    if (zarionBigDropEndTimer > performance.now()) {
-      const bigDropLeft = ((zarionBigDropEndTimer - performance.now()) / 1000).toFixed(1);
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(255,167,38,0.85);"><span>成長</span><span>${bigDropLeft}s</span></div>`;
-    }
-    if (window.kokumeiChaosEndTimer && window.kokumeiChaosEndTimer > performance.now()) {
-      const chaosLeft = ((window.kokumeiChaosEndTimer - performance.now()) / 1000).toFixed(1);
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(38,50,56,0.95); border:1px solid #78909c;"><span>混沌</span><span>${chaosLeft}s</span></div>`;
-    }
-    if (waterBonusEndTime > performance.now()) {
-      const waterLeft = ((waterBonusEndTime - performance.now()) / 1000).toFixed(1);
-      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(41,182,246,0.85);"><span>加成</span><span>${waterLeft}s</span></div>`;
-    }
+    // 🌟 限制：每 1000 毫秒（1秒）才更新一次 DOM 畫面，避免 60fps 頻繁重排引發卡頓
+    if (now - lastDomUpdateTime > 1000) {
+      lastDomUpdateTime = now;
+      let activeEffectsHtml = '';
+      
+      if (windStormTimer > 0) {
+        activeEffectsHtml += `<div class="effect-timer-node"><span>風壓</span><span>${windStormTimer.toFixed(1)}s</span></div>`;
+      }
+      if (isNegativeSealActive && negativeSealTimer > 0) {
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(21,101,192,0.85);"><span>恆定</span><span>${negativeSealTimer.toFixed(1)}s</span></div>`;
+      }
+      if (isSkillSealActive && skillSealTimer > 0) {
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(26,35,126,0.85);"><span>奪取</span><span>${skillSealTimer.toFixed(1)}s</span></div>`;
+      }
+      if (zeroGravityTimer > 0) {
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(0,229,255,0.75);"><span>漂浮</span><span>${zeroGravityTimer.toFixed(1)}s</span></div>`;
+      }
+      if (blackHoleTimer > 0) {
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(123,31,162,0.85);"><span>引力</span><span>${blackHoleTimer.toFixed(1)}s</span></div>`;
+      }
+      if (gravityEffectTimer > 0) {
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(85,85,85,0.85);"><span>重力</span><span>${gravityEffectTimer.toFixed(1)}s</span></div>`;
+      }
+      if (oaeSmallDropTimer > performance.now()) {
+        const smallLeft = ((oaeSmallDropTimer - performance.now()) / 1000).toFixed(1);
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(130,119,23,0.85);"><span>壓制</span><span>${smallLeft}s</span></div>`;
+      }
+      if (shieldActiveEndTime > performance.now()) {
+        const shieldLeft = ((shieldActiveEndTime - performance.now()) / 1000).toFixed(1);
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(0,230,118,0.85);"><span>恆定</span><span>${shieldLeft}s</span></div>`;
+      }
+      if (zarionBigDropEndTimer > performance.now()) {
+        const bigDropLeft = ((zarionBigDropEndTimer - performance.now()) / 1000).toFixed(1);
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(255,167,38,0.85);"><span>成長</span><span>${bigDropLeft}s</span></div>`;
+      }
+      if (window.kokumeiChaosEndTimer && window.kokumeiChaosEndTimer > performance.now()) {
+        const chaosLeft = ((window.kokumeiChaosEndTimer - performance.now()) / 1000).toFixed(1);
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(38,50,56,0.95); border:1px solid #78909c;"><span>混沌</span><span>${chaosLeft}s</span></div>`;
+      }
+      if (waterBonusEndTime > performance.now()) {
+        const waterLeft = ((waterBonusEndTime - performance.now()) / 1000).toFixed(1);
+        activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(41,182,246,0.85);"><span>加成</span><span>${waterLeft}s</span></div>`;
+      }
 
-    effectTimerContainer.innerHTML = activeEffectsHtml;
+      effectTimerContainer.innerHTML = activeEffectsHtml;
+    }
   } else if (effectTimerContainer) {
     effectTimerContainer.innerHTML = '';
   }
@@ -4491,12 +4497,13 @@ function mainRender(now) {
   const isSkillCountGoal = selectedVariant && selectedVariant.goalType === 'skillCount';
   const pct = isSkillCountGoal ? (currentStageSkillCount / targetSkillCount) : (currentScore / stageTargetScore);
   const isHighTension = pct >= 0.8 || performance.now() < waterBonusEndTime;
+  const isMobile = window.innerWidth <= 768; // 🌟 偵測是否為手機或平板
   const glowAlpha = 0.3 + Math.sin(now * 0.006) * 0.2;
   ctx.save();
   ctx.strokeStyle = isHighTension ? `rgba(245, 166, 35, ${glowAlpha + 0.35})` : `rgba(224, 123, 70, ${glowAlpha + 0.15})`;
   ctx.lineWidth = isHighTension ? 9 : 5;
   ctx.shadowColor = isHighTension ? '#f5a623' : '#e07b46';
-  ctx.shadowBlur = isHighTension ? 26 : 14;
+  ctx.shadowBlur = isMobile ? 0 : (isHighTension ? 26 : 14); // 🌟 手機直接設為 0 不計算模糊
   ctx.strokeRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
   ctx.restore();
 
@@ -4520,7 +4527,7 @@ function mainRender(now) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.shadowColor = laser.color;
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = isMobile ? 0 : 20; // 🌟 手機關閉陰影模糊
     ctx.globalAlpha = Math.max(0, laser.life);
     ctx.stroke();
     ctx.restore();
