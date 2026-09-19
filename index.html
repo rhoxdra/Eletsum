@@ -4084,7 +4084,7 @@ function drawBoardFrame() {
   ctx.strokeStyle = isStoneShieldActive ? '#00e676' : 'rgba(224, 123, 70, 0.55)';
   ctx.lineWidth = isStoneShieldActive ? 4.5 : 2.5;
   ctx.shadowColor = isStoneShieldActive ? '#00e676' : 'rgba(224, 123, 70, 0.8)';
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = 0;
   
   const r = 12;
   ctx.beginPath();
@@ -4194,7 +4194,7 @@ function mainRender(now) {
           ctx.fillStyle = b.charData.border || '#00e5ff';
           ctx.globalAlpha = 0.35;
           ctx.shadowColor = '#00e5ff';
-          ctx.shadowBlur = 15;
+          ctx.shadowBlur = 0;
           ctx.fill();
           ctx.restore();
         }
@@ -4387,7 +4387,7 @@ function mainRender(now) {
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.shadowColor = laser.color;
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 0;
     ctx.globalAlpha = Math.max(0, laser.life);
     ctx.stroke();
     ctx.restore();
@@ -4397,7 +4397,7 @@ function mainRender(now) {
     ctx.save();
     ctx.beginPath();
     fusionBeams.forEach(b => { ctx.moveTo(b.from.position.x, b.from.position.y); ctx.lineTo(b.to.position.x, b.to.position.y); });
-    ctx.strokeStyle = '#ff5722'; ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.shadowColor = '#ff3d00'; ctx.shadowBlur = 22; ctx.stroke();
+    ctx.strokeStyle = '#ff5722'; ctx.lineWidth = 12; ctx.lineCap = 'round'; ctx.shadowColor = '#ff3d00'; ctx.shadowBlur = 0; ctx.stroke();
     ctx.restore();
   }
 
@@ -4414,7 +4414,7 @@ function mainRender(now) {
       ctx.fillStyle = b.charData.border || '#00e5ff';
       ctx.globalAlpha = 0.35;
       ctx.shadowColor = b.charData.border || '#00e5ff';
-      ctx.shadowBlur = 12;
+      ctx.shadowBlur = 0;
       ctx.fill();
       ctx.restore();
     }
@@ -4455,18 +4455,18 @@ function mainRender(now) {
       ctx.lineWidth = 4; 
       ctx.strokeStyle = '#29b6f6'; 
       ctx.shadowColor = '#29b6f6'; 
-      ctx.shadowBlur = 10; 
+      ctx.shadowBlur = 0; 
       ctx.stroke();
     }
 
     if (b.isFrenzy) {
       ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
-      ctx.lineWidth = 4; ctx.strokeStyle = '#e07b46'; ctx.shadowColor = '#e07b46'; ctx.shadowBlur = 10; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#e07b46'; ctx.shadowColor = '#e07b46'; ctx.shadowBlur = 0; ctx.stroke();
     }
 
     if (b.isGoldBall) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 4; ctx.strokeStyle = '#ffd700'; ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 10; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#ffd700'; ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 0; ctx.stroke();
     }
 
     if (b.isBlackBall) {
@@ -4476,7 +4476,7 @@ function mainRender(now) {
 
     if (b.isFrozenBall) {
       ctx.beginPath(); ctx.arc(0, 0, r + 3, 0, Math.PI * 2);
-      ctx.lineWidth = 4; ctx.strokeStyle = '#00e5ff'; ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 10; ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#00e5ff'; ctx.shadowColor = '#00e5ff'; ctx.shadowBlur = 0; ctx.stroke();
     }
 
     if (b.isGreenBall) {
@@ -4497,7 +4497,7 @@ function mainRender(now) {
 
     if (b.isBomb) {
       ctx.beginPath(); ctx.arc(0, 0, r + 4, 0, Math.PI * 2);
-      ctx.lineWidth = 4.5; ctx.strokeStyle = '#ff1744'; ctx.shadowColor = '#ff1744'; ctx.shadowBlur = 12; ctx.stroke();
+      ctx.lineWidth = 4.5; ctx.strokeStyle = '#ff1744'; ctx.shadowColor = '#ff1744'; ctx.shadowBlur = 0; ctx.stroke();
       ctx.font = '900 13px sans-serif';
       ctx.fillStyle = '#ff1744';
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -4507,7 +4507,7 @@ function mainRender(now) {
     if (b.isAttributePending) {
       ctx.beginPath(); ctx.arc(0, 0, r + 6, 0, Math.PI * 2);
       ctx.lineWidth = 4; ctx.strokeStyle = '#ffeb3b';
-      ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 12;
+      ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 0;
       ctx.setLineDash([6, 4]); ctx.stroke(); ctx.setLineDash([]);
     }
 
@@ -4515,7 +4515,7 @@ function mainRender(now) {
       ctx.rotate(rotationCounter);
       ctx.beginPath(); ctx.arc(0, 0, r + 6, 0, Math.PI * 2);
       ctx.lineWidth = 4.5; ctx.strokeStyle = '#ffd700';
-      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 15;
+      ctx.shadowColor = '#ffd700'; ctx.shadowBlur = 0;
       ctx.setLineDash([8, 5]); ctx.stroke(); ctx.setLineDash([]);
     }
 
@@ -4537,7 +4537,7 @@ function mainRender(now) {
     ctx.lineWidth = 4 * sw.alpha;
     ctx.globalAlpha = Math.max(0, sw.alpha);
     ctx.shadowColor = sw.color;
-    ctx.shadowBlur = 16;
+    ctx.shadowBlur = 0;
     ctx.stroke();
     ctx.restore();
   }
@@ -4566,7 +4566,7 @@ function mainRender(now) {
     ctx.globalAlpha = Math.max(0, fs.life);
     ctx.fillStyle = fs.isCritical ? '#ffeb3b' : fs.color;
     ctx.shadowColor = fs.isCritical ? '#ff5722' : fs.color;
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 0;
     ctx.fillText(fs.isCritical ? `${fs.text}!` : fs.text, 0, 0);
     ctx.restore();
   }
