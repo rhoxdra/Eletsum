@@ -3293,7 +3293,6 @@ function triggerCharSkillEffect(charId) {
   if (!char) return;
 
   if (char.roleType === '無能力者') {
-    showBanner(`【${char.name}・應援珠】來囉，快點擊觸發吧！`);
     spawnSingleBall(VIRTUAL_WIDTH/2, 60, char, true);
     return;
   }
@@ -3316,7 +3315,6 @@ function triggerCharSkillEffect(charId) {
     case 'area':
     case 'raku':
     case 'garoz':
-      showBanner(`【${char.name}・權能珠】來囉，快點擊觸發吧！`);
       spawnSingleBall(VIRTUAL_WIDTH/2, 60, char, true);
       break;
 
@@ -3526,7 +3524,6 @@ function triggerCharSkillEffect(charId) {
 }
 
 function triggerAttributeAsPending(char) {
-  showBanner(`【${char.element}・屬性珠】來囉，快點擊觸發吧！`);
   const b = spawnSingleBall(VIRTUAL_WIDTH/2, 40, char, false, false, false, false, false, true);
   resizeBallBody(b, BALL_RADIUS * 1.35);
 }
@@ -4159,7 +4156,7 @@ function processBannerQueue() {
       isBannerShowing = false;
       processBannerQueue();
     }, 300);
-  }, 1500);
+  }, 1200);
 }
 
 function setDialogue(speaker, text) {
