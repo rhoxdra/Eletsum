@@ -4574,7 +4574,9 @@ function mainRender(now) {
   ctx.restore();
   requestAnimationFrame(mainRender);
 }
-
+document.addEventListener('dblclick', function(e) {
+    e.preventDefault();
+}, { passive: false });
 requestAnimationFrame(mainRender);
 </script>
 </body>
