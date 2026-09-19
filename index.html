@@ -490,8 +490,8 @@ canvas { width: 100%; height: 100%; display: block; mix-blend-mode: screen; touc
       border: none;
       color: #e07b46;
       font-size: 0.8rem;
-      /* 🌟 新增：強制純文字字型，杜絕 Emoji 🌟 */
-      font-family: "Segoe UI Symbol", "Apple Symbols", -apple-system, sans-serif !important;
+      /* 🌟 強制使用純文字符號字型，徹底杜絕 Emoji 色彩與樣式 🌟 */
+      font-family: "Segoe UI Symbol", "Apple Symbols", Arial, sans-serif !important;
       font-variant-emoji: text !important;
       cursor: pointer;
       padding: 2px;
@@ -898,7 +898,7 @@ function updatePlayControlUI() {
     const playPauseBtn = document.getElementById('music-play-pause-btn');
     const menuBtn = document.getElementById('music-menu-btn');
     if (playPauseBtn) {
-        playPauseBtn.innerText = isMusicPlaying ? "⏸" : "▶";
+        playPauseBtn.innerText = isMusicPlaying ? "‖" : "▶";
     }
     if (menuBtn) {
         // 播放中時選單圓鈕外框發微光提示
