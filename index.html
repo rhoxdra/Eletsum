@@ -1009,6 +1009,68 @@ function setGlobalBackground(url, isLandscape = true, enableDarkOverlay = false)
   }, 150);
 }
 
+function clearAllActiveEffects() {
+  isCastingSkill = false;
+  fusionBeams = null;
+
+  bannerQueue = [];
+  isBannerShowing = false;
+  const bannerEl = document.getElementById('banner-notify');
+  if (bannerEl) {
+    bannerEl.style.opacity = '0';
+    bannerEl.style.transform = 'translate(-50%, -50%) scale(0.8)';
+    bannerEl.innerText = '';
+  }
+
+  gravityDebuffTimer = 0;
+  isStoneShieldActive = false;
+  isManualDropLocked = false;
+  isNoObstacleActive = false;
+  isSkillSealActive = false;
+  skillSealTimer = 0;
+  isNegativeSealActive = false;
+  negativeSealTimer = 0;
+  rakuNextGoldWave = false;
+  zarionBigDropEndTimer = 0;
+  oaeSmallDropTimer = 0;
+  window.kokumeiChaosEndTimer = 0;
+  waterBonusEndTime = 0;
+  shieldActiveEndTime = 0;
+  hitStopUntil = 0;
+
+  lateralGravityTimer = 0;
+  lateralGravityDir = 0;
+  windStormTimer = 0;
+  windStormSpinDir = 1;
+  windCenter = { x: 200, y: 340 };
+  blackHoleTimer = 0;
+  blackHoleSpinDir = 1;
+  blackHolePos = { x: 0, y: 0 };
+  gravityEffectTimer = 0;
+  magneticTimer = 0;
+  screenShakeTimer = 0;
+  zeroGravityTimer = 0;
+
+  rotatingBarriers.forEach(rb => World.remove(world, rb.body));
+  rotatingBarriers = [];
+  barrierTimer = 0;
+
+  engine.gravity.x = 0;
+  engine.gravity.y = BASE_GRAVITY;
+
+  particles.length = 0;
+  shockwaves.length = 0;
+  chainLasers.length = 0;
+  floatingScores.length = 0;
+  if (pixiApp && pixiParticlesContainer) {
+    pixiParticlesContainer.removeChildren();
+  }
+  activePixiParticles.length = 0;
+
+  const effectTimerContainer = document.getElementById('active-effect-timer');
+  if (effectTimerContainer) effectTimerContainer.innerHTML = '';
+}
+
 function resetToTitleScreen() {
   if (timerInterval) clearInterval(timerInterval);
   gameStatus = 'TITLE';
@@ -2251,18 +2313,15 @@ function startStage(stage, shouldReshuffle = true) {
   resizeBoard();
   balls.forEach(b => World.remove(world, b));
   balls.length = 0;
-  particles.length = 0;
-  shockwaves.length = 0;
-  chainLasers.length = 0;
-  floatingScores.length = 0;
-  fusionBeams = null;
-  isCastingSkill = false;
+
+  // 完整重置所有效果與計時，防止上一關狀態污染起始盤面
+  clearAllActiveEffects();
+
   currentScore = 0;
   currentStageSkillCount = 0;
   manualDropRemaining = 3;
   btnManualDropEl.innerText = `流星火彈 (${manualDropRemaining})`;
   
-  // 第二種分支挑戰（挑戰：陪伴 / 成長等加分分支，此處以 id === 'overload' 或判定目標為主）
   const isSecondVariant = selectedVariant && selectedVariant.baseTarget && selectedVariant.baseTarget > 42000;
   if (isSecondVariant) {
     btnManualDropEl.disabled = true;
@@ -2275,7 +2334,6 @@ function startStage(stage, shouldReshuffle = true) {
   barrierItemRemaining = 1;
   btnUseBarrierEl.innerText = `震巖流！ (${barrierItemRemaining})`;
   
-  // 第三種分支挑戰（權能連鎖考驗目標）
   const isThirdVariant = selectedVariant && selectedVariant.goalType === 'skillCount';
   if (isThirdVariant) {
     btnUseBarrierEl.disabled = true;
@@ -2303,33 +2361,6 @@ function startStage(stage, shouldReshuffle = true) {
     setupMatchPool(stage);
   }
 
-  gravityDebuffTimer = 0;
-  isStoneShieldActive = false;
-  isManualDropLocked = false;
-  isNoObstacleActive = false;
-  isSkillSealActive = false;
-  skillSealTimer = 0;
-  gravityEffectTimer = 0;
-  rakuNextGoldWave = false;
-  zarionBigDropEndTimer = 0;
-  lateralGravityTimer = 0;
-  lateralGravityDir = 0;
-  windStormTimer = 0;
-  windCenter = { x: 200, y: 340 };
-  waterBonusEndTime = 0;
-  magneticTimer = 0;
-  oaeSmallDropTimer = 0;
-
-  blackHoleTimer = 0;
-  screenShakeTimer = 0;
-  zeroGravityTimer = 0;
-  
-  rotatingBarriers.forEach(rb => World.remove(world, rb.body));
-  rotatingBarriers = [];
-  barrierTimer = 0;
-
-  engine.gravity.x = 0;
-  engine.gravity.y = BASE_GRAVITY;
   timeRemaining = GAME_DURATION;
   updateTimerDisplay();
 
@@ -3722,6 +3753,10 @@ function updateScore(delta) {
 function handleStageClear() {
   hasClearedAnyStageInCurrentRun = true;
   totalRemainingTime += timeRemaining;
+
+  // 過關瞬間立刻截斷所有效果與提示標語
+  clearAllActiveEffects();
+
   const isSkillCountGoal = selectedVariant && selectedVariant.goalType === 'skillCount';
 
   if (currentStage < TOTAL_STAGES) {
@@ -3776,13 +3811,10 @@ function handleStageClear() {
     btnNextStage.disabled = true;
     btnCheerBack.disabled = true;
     
-    let countdown = 1; // 顯示維持 1 秒
-    btnNextStage.disabled = true;
-    btnCheerBack.disabled = true;
+    let countdown = 1;
     btnNextStage.innerText = `繼續推進 (${countdown}s)`;
     btnCheerBack.innerText = `返回首頁 (${countdown}s)`;
 
-    // 實際鎖定 1.5 秒後解鎖
     setTimeout(() => {
       btnNextStage.disabled = false;
       btnCheerBack.disabled = false;
@@ -3790,7 +3822,6 @@ function handleStageClear() {
       btnCheerBack.innerText = '返回首頁';
     }, 1500);
 
-    // 1 秒後將按鈕上的文字轉為就緒
     setTimeout(() => {
       if (btnNextStage.disabled) {
         btnNextStage.innerText = '繼續推進 (0s)';
@@ -3812,7 +3843,7 @@ function handleStageClear() {
       playSynthPopSFX();
       if (btnCheerBack.disabled) return;
       cheerModal.style.display = 'none';
-      hasClearedAnyStageInCurrentRun = false; // 點擊返回首頁時重置背景
+      hasClearedAnyStageInCurrentRun = false;
       resetToTitleScreen();
     };
   } else {
