@@ -2166,7 +2166,7 @@ function renderGuidePage() {
           <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
             <div style="position:absolute; inset:0; background:rgba(76,175,80,0.55); border-radius:50%;"></div>
           </div>
-          <div style="font-size:10px;"><strong>吞噬珠</strong>：每 3 秒扣 100 分，每15秒會侵蝕 2 顆周遭的珠子，可正常消除。</div>
+          <div style="font-size:10px;"><strong>吞噬珠</strong>：每 3 秒扣 100 分，可正常消除。</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
           <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
@@ -2178,13 +2178,13 @@ function renderGuidePage() {
           <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
             <div style="position:absolute; inset:0; background:rgba(0,229,255,0.45); border-radius:50%;"></div>
           </div>
-          <div style="font-size:10px;"><strong>冰封珠</strong>：被冰結，每 15 秒會侵蝕 3 顆周遭的珠子，點擊後可解凍復原。</div>
+          <div style="font-size:10px;"><strong>冰封珠</strong>：被冰結，點擊後可解凍復原。</div>
         </div>
         <div style="display:flex; align-items:center; gap:8px;">
           <div style="position:relative; width:26px; height:26px; border-radius:50%; background:url('images/kulu.webp') center/cover; border:2px solid #1a3b5c; flex-shrink:0;">
             <div style="position:absolute; inset:-2px; border:2px solid #ff1744; border-radius:50%;"></div>
           </div>
-          <div style="font-size:10px;"><strong>超載珠</strong>： 15 秒倒數炸彈，歸零時未消除則每顆扣 1500 分，並侵蝕 1 顆周遭的珠子，可正常消除。</div>
+          <div style="font-size:10px;"><strong>超載珠</strong>： 15 秒倒數炸彈，歸零時未消除則每顆扣 1500 分，可正常消除。</div>
         </div>
       `;
       break;
@@ -2569,100 +2569,6 @@ setInterval(() => {
   }
 }, 3000);
 
-// 冰封珠與吞噬珠擴散機制（每 15 秒一次，前 2 秒觸發預警特效）
-setInterval(() => {
-  if (gameStatus !== 'PLAYING' || isCastingSkill || isNegativeSealActive) return;
-
-  const currentFrozenSources = balls.filter(b => b.isFrozenBall);
-  const currentGreenSources = balls.filter(b => b.isGreenBall);
-
-  const willFreeze = currentFrozenSources.length > 0;
-  const willGreen = currentGreenSources.length > 0;
-
-  if (!willFreeze && !willGreen) return;
-
-  // 1. 預警階段（第 13 秒）：挑選即將感染的目標並施加預警特效
-  let targetsToFreeze = [];
-  let targetsToGreen = [];
-
-  if (willFreeze) {
-    // 來源珠震盪發光提醒
-    currentFrozenSources.forEach(src => {
-      createShockwave(src.position.x, src.position.y, '#00e5ff');
-      createVFX(src.position.x, src.position.y, '#00e5ff', 12);
-    });
-    // 挑選 3 顆即將被冰封的目標
-    const freezePool = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrozenBall && !b.isBlackBall && !b.isBomb);
-    targetsToFreeze = freezePool.sort(() => Math.random() - 0.5).slice(0, 3);
-    targetsToFreeze.forEach(t => {
-      createVFX(t.position.x, t.position.y, '#00e5ff', 16);
-      triggerSpark(t.position.x, t.position.y, '#ffffff');
-    });
-  }
-
-  if (willGreen) {
-    // 來源珠震盪發光提醒
-    currentGreenSources.forEach(src => {
-      createShockwave(src.position.x, src.position.y, '#69f0ae');
-      createVFX(src.position.x, src.position.y, '#69f0ae', 12);
-    });
-    // 挑選 2 顆即將被吞噬的目標（避開已經被選定要冰封的目標）
-    const greenPool = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGreenBall && !b.isBlackBall && !b.isBomb && !targetsToFreeze.includes(b));
-    targetsToGreen = greenPool.sort(() => Math.random() - 0.5).slice(0, 2);
-    targetsToGreen.forEach(t => {
-      createVFX(t.position.x, t.position.y, '#69f0ae', 16);
-      triggerSpark(t.position.x, t.position.y, '#ffffff');
-    });
-  }
-
-  // 橫幅與音效預警
-  if (willFreeze && willGreen) {
-    showBanner('〔!〕警告：寒霜與吞噬正在凝聚，2 秒後擴散！');
-  } else if (willFreeze) {
-    showBanner('〔!〕警告：極寒能量正在凝聚，2 秒後擴散！');
-  } else if (willGreen) {
-    showBanner('〔!〕警告：吞噬能量正在蔓延，2 秒後擴散！');
-  }
-  playSynthPopSFX();
-
-  // 2. 結算階段：2 秒預警後（滿 15 秒）正式轉化
-  setTimeout(() => {
-    // 若遊戲已中斷或被高和「恆定」免疫，取消轉化
-    if (gameStatus !== 'PLAYING' || isNegativeSealActive) return;
-
-    // 正式轉化冰封珠
-    targetsToFreeze.forEach(b => {
-      if (balls.includes(b) && !b.isFrozenBall) {
-        b.isFrozenBall = true;
-        b.isBlackBall = false;
-        b.isGreenBall = false;
-        b.isGoldBall = false;
-        b.isFrenzy = false;
-        b.isHourglass = false;
-        createVFX(b.position.x, b.position.y, '#00e5ff', 18);
-        spawnPixiExplosion(b.position.x, b.position.y, 0x00e5ff, 20);
-      }
-    });
-
-    // 正式轉化吞噬珠
-    targetsToGreen.forEach(b => {
-      if (balls.includes(b) && !b.isGreenBall) {
-        b.isGreenBall = true;
-        b.isBlackBall = false;
-        b.isFrozenBall = false;
-        b.isGoldBall = false;
-        b.isFrenzy = false;
-        b.isHourglass = false;
-        createVFX(b.position.x, b.position.y, '#69f0ae', 18);
-        spawnPixiExplosion(b.position.x, b.position.y, 0x69f0ae, 20);
-      }
-    });
-
-    if (targetsToFreeze.length > 0 || targetsToGreen.length > 0) {
-      playSynthPopSFX();
-    }
-  }, 2000);
-}, 15000);
 
 setInterval(() => {
   if (gameStatus === 'PLAYING' && balls.length < MAX_BALLS && !isCastingSkill) {
@@ -2704,7 +2610,22 @@ function getPointerCoord(e) {
 }
 
 function handleTap(pos) {
-  if (gameStatus !== 'PLAYING' || isCastingSkill) return;
+  if (gameStatus !== 'PLAYING') return;
+  
+  // 🌟 安全保險絲：如果 isCastingSkill 卡死超過 1.5 秒，強制幫它解鎖，絕不讓遊戲點擊死掉
+  if (isCastingSkill) {
+    if (!window._skillLockTimestamp) {
+      window._skillLockTimestamp = performance.now();
+    } else if (performance.now() - window._skillLockTimestamp > 1500) {
+      isCastingSkill = false;
+      window._skillLockTimestamp = null;
+      console.warn("⚠️ 偵測到技能狀態異常鎖定超過 1.5 秒，已強制解鎖點擊！");
+    } else {
+      return;
+    }
+  } else {
+    window._skillLockTimestamp = null;
+  }
 
   let clickedBall = null;
   for (let b of balls) {
@@ -3332,7 +3253,9 @@ function triggerCharSkillEffect(charId) {
       for (let i = 0; i < 4; i++) {
         const targets = balls.filter(b => !b.isSpecialOrb && !b.isGreenBall && !b.isBlackBall);
         if (targets.length > 0) {
-          target.isGreenBall = true;
+          // 🌟 修正：從 targets 陣列中隨機挑選一顆球，正確設定吞噬珠屬性
+          const chosenTarget = targets[Math.floor(Math.random() * targets.length)];
+          chosenTarget.isGreenBall = true;
         } else {
           spawnSingleBall(Math.random() * VIRTUAL_WIDTH, -30, getRandomWeightedChar(), false, false, false, true);
         }
@@ -4339,49 +4262,17 @@ function mainRender(now) {
 
     for (let i = balls.length - 1; i >= 0; i--) {
       const b = balls[i];
-      if (b.isBomb) {
+      if (b && b.isBomb) {
         b.bombTimer -= dt / 1000;
         if (b.bombTimer <= 0) {
           playSynthPopSFX();
-          createVFX(b.position.x, b.position.y, '#ff1744', 22);
-          spawnPixiExplosion(b.position.x, b.position.y, 0xff1744, 30);
+          createVFX(b.position.x, b.position.y, '#ff1744', 18);
           updateScore(-1500);
 
-          // 1. 徹底消除引爆的超載珠本體並移出盤面
           World.remove(world, b);
           balls.splice(i, 1);
 
-          // 2. 判斷高和「恆定」免疫狀態
-          if (isNegativeSealActive) {
-            showBanner('【超載珠引爆】扣除 1500 分！（恆定抵消擴散）');
-          } else {
-            showBanner('【超載珠引爆】扣除 1500 分並引發連鎖擴散！');
-
-            // 3. 從場上剩餘的球中選出 1 顆可感染的目標
-            const infectCandidates = balls.filter(target => 
-              !target.isSpecialOrb && 
-              !target.isAttributePending && 
-              !target.isBomb && 
-              !target.isBlackBall
-            );
-            
-            infectCandidates.sort(() => Math.random() - 0.5).slice(0, 1).forEach(target => {
-              target.isBomb = true;
-              target.bombTimer = 15.0;
-              // 清除所有既有妨礙與增益標籤，避免狀態衝突
-              target.isBlackBall = false;
-              target.isFrozenBall = false;
-              target.isGreenBall = false;
-              target.isGoldBall = false;
-              target.isChainLocked = false;
-              target.isFrenzy = false;
-              target.isHourglass = false;
-              target.isBlindBlack = false;
-              createVFX(target.position.x, target.position.y, '#ff1744', 14);
-            });
-          }
-
-          // 補回被炸掉消除的珠子，維持盤面平衡
+          showBanner('【超載珠引爆】扣除 1500 分！');
           setTimeout(() => refillBalls(MAX_BALLS), 300);
         }
       }
