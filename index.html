@@ -2610,22 +2610,7 @@ function getPointerCoord(e) {
 }
 
 function handleTap(pos) {
-  if (gameStatus !== 'PLAYING') return;
-  
-  // 🌟 安全保險絲：如果 isCastingSkill 卡死超過 1.5 秒，強制幫它解鎖，絕不讓遊戲點擊死掉
-  if (isCastingSkill) {
-    if (!window._skillLockTimestamp) {
-      window._skillLockTimestamp = performance.now();
-    } else if (performance.now() - window._skillLockTimestamp > 1500) {
-      isCastingSkill = false;
-      window._skillLockTimestamp = null;
-      console.warn("⚠️ 偵測到技能狀態異常鎖定超過 1.5 秒，已強制解鎖點擊！");
-    } else {
-      return;
-    }
-  } else {
-    window._skillLockTimestamp = null;
-  }
+  if (gameStatus !== 'PLAYING' || isCastingSkill) return;
 
   let clickedBall = null;
   for (let b of balls) {
