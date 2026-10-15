@@ -842,7 +842,7 @@ function loadTrack(index) {
     const titleElem = document.getElementById('music-title');
     if (playlist[index] && audio) {
         audio.src = playlist[index].src;
-        audio.volume = 0.4;
+        audio.volume = 0.6;
         audio.load();
         if (titleElem) {
             titleElem.innerText = playlist[index].title;
