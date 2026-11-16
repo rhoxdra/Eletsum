@@ -1034,6 +1034,8 @@ function clearAllActiveEffects() {
   negativeSealTimer = 0;
   rakuNextGoldWave = false;
   zarionBigDropEndTimer = 0;
+  rinBigDropEndTimer = 0;    
+  wesaidChaosEndTimer = 0;    
   oaeSmallDropTimer = 0;
   window.kokumeiChaosEndTimer = 0;
   waterBonusEndTime = 0;
@@ -1408,7 +1410,7 @@ const CHARACTER_DATABASE = [
     endingText: '共鳴和外科手術其實沒兩樣，冷靜與果斷都是不可或缺的關鍵技能。這次的期中考你已經漂亮地通過了，接下來的期末考也得繼續保持這股氣勢，加油喔！' 
   },
   { id: 'doutou', name: '怒濤銳步', element: '風屬性', color: '#e65100', border: '#ff9800', 
-    type: 'none', roleType: '使用者', reqLeader: 13, reqSupport: 15, 
+    type: 'none', roleType: '使用者 / 地脈操流者', reqLeader: 13, reqSupport: 15, 
     desc: '【風屬性】產生暴風 1.5 秒，將 3 顆角色珠尺寸變大，落下 3 顆延時珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/doutou_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['疾速如風，輕鬆甩開對手！', '追得上我嗎？前方路還遠著呢！'], 
@@ -1491,9 +1493,9 @@ const CHARACTER_DATABASE = [
     cheers: ['哈哈，這麼輕鬆就跑過去啦！', '輕而易舉，小菜一碟！'], 
     endingText: '太過癮了！像這樣毫無保留、隨心所欲地在風中放肆奔跑，果然就是最痛快淋漓的事！別停下來，這次我們目標可是要把銳步教授給狠狠甩在後頭！說好了，最後輸的人可是要掏腰包請客的喔！' 
   },
-  { id: 'horse', name: '颯太', element: '無能力', color: '#4e342e', border: '#b0bec5',
-    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
-    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
+  { id: 'horse', name: '颯太', element: '火屬性', color: '#bf360c', border: '#ff7043', 
+    type: 'none', roleType: '地脈操流者', reqLeader: 13, reqSupport: 15, 
+    desc: '【火屬性】消除 3 顆角色珠，將 3 顆角色珠尺寸變大，轉襲 2 顆超載珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/horse_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['看吧，只要撐著就能過關！', '課題接踵而來，沉著以對就能突破！'], 
     endingText: '互相扶持、彼此幫忙，果然才是通往勝利最快的捷徑！今天真的非常謝謝你鼎力相助，這段並肩作戰的過程讓我安心不少……說好了，下次有機會我們還要再一起組隊挑戰更難的關卡喔！' 
@@ -1512,16 +1514,16 @@ const CHARACTER_DATABASE = [
     cheers: ['等待是值得的，頭條新聞有著落了！', '取材順利，這篇報導一定能大紅大紫！'], 
     endingText: '幸虧有你一路從旁鼎力相助，我們才能成功捕捉到眼前這幕如此關鍵的決定性瞬間。放心吧，我會把這份獨家真相毫無保留地呈獻給全世界，明天的頭條版面絕對會讓所有人大開眼界！' 
   },
-  { id: 'rin', name: '嶙安', element: '無能力', color: '#37474f', border: '#b0bec5',
-    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
-    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
-    bgUrl: 'images/rin_bg.webp', isLandscape: true, cleared: false, 
-    cheers: ['你真厲害，我……我有幫上忙嗎？', '真沒想到……原來我也可以做到！'], 
-    endingText: '呼……呼……直到這裡，我從來都沒想過自己竟然也有辦法抵達這種不可思議的境界……謝謝你讓我看見了這片全然不同的壯闊世界，這份深刻的感動與現在的悸動，我一輩子都會永遠銘記在心！' 
+  { id: 'rin', name: '嶙安', element: '土屬性', color: '#33691e', border: '#8bc34a', 
+    type: 'negative', roleType: '地脈操流者', reqLeader: 14, reqSupport: 15, 
+    desc: '【土屬性】發動地震波，5 秒內落下的角色珠尺寸變大，將 3 顆角色珠尺寸變小。', 
+    bgUrl: 'images/rin_break_bg.webp', isLandscape: true, cleared: false, 
+    cheers: ['這股湧上來的地脈力量……我已經不再是過去那個軟弱的雜工了！', '看好了，這就是我親手握住的全新力量！'], 
+    endingText: '呼……呼……直到遇見維賽德大人並觸碰共鳴石的那一刻，我從來都沒想過自己竟然也能掌握如此強大的地脈之力……過去的軟弱已經徹底斬斷了，接下來的戰鬥，我會用這雙拳頭開闢屬於我們的道路！' 
   },
-  { id: 'cat', name: '瑟莉雅', element: '無能力', color: '#546e7a', border: '#b0bec5', 
-    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
-    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
+  { id: 'cat', name: '瑟莉雅', element: '土屬性', color: '#546e7a', border: '#8bc34a', 
+    type: 'none', roleType: '地脈操流者', reqLeader: 13, reqSupport: 15, 
+    desc: '【土屬性】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠。', 
     bgUrl: 'images/cat_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['和平的日子，總在不知不覺中消失……', '我好像明白了，這就是所謂的「期望」嗎？'], 
     endingText: '這場共鳴讓我終於明白人與人之間的羈絆，就是這樣在不知不覺中建立起來的。現在的我，已經擁有足夠的勇氣去面對五十嵐老師了，真的非常謝謝你陪著我走過這段艱難的旅程。' 
@@ -1567,6 +1569,34 @@ const CHARACTER_DATABASE = [
     bgUrl: 'images/grossa_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['哼，這種局面只是小意思而已。', '機會來了，準備開牌大獲全勝吧！'], 
     endingText: '技術確實有兩下子。既然這樣，看來我得動點心思把你留下來替我做事才行。怎麼樣？我給的待遇絕對優渥大方，保證你跟著我混絕對不會有後悔的一天！' 
+  },
+  { id: 'eagle', name: '曜空翔羽', element: '全屬性', color: '#4e342e', border: '#ffb300', 
+    type: 'none', roleType: '使用者', reqLeader: 14, reqSupport: 16, 
+    desc: '【全屬性】破除全場幕盲珠、引發 1.5 秒暴風、轉襲 3 顆黃金珠與 3 顆萬配珠，並消除 5 顆妨礙珠。', 
+    bgUrl: 'images/eagle_bg.webp', isLandscape: true, cleared: false, 
+    cheers: ['局勢皆在掌握之中，繼續推進吧。', '時機已然成熟，準備迎接最後的飛躍！'], 
+    endingText: '你的表現相當沉穩，懂得在最合適的時機運用力量——這正是聚學舍所推崇的智慧。我會繼續在天際之上守望著你們的成長，期待下次在雲端相會。' 
+  },
+  { id: 'wesaid', name: '維賽德', element: '無屬性', color: '#263238', border: '#ec407a', 
+    type: 'negative', roleType: '地脈操流者', reqLeader: 14, reqSupport: 15, 
+    desc: '【無屬性】引發 1.5 秒引力黑洞、5 秒內落下的角色珠大小不定，並落下 2 顆超載珠。', 
+    bgUrl: 'images/wesaid_bg.webp', isLandscape: true, cleared: false, 
+    cheers: ['哼，真是心感愉悅的節奏呢。', '適者生存的法則，正一步步在這片盤面上應驗……'], 
+    endingText: '精彩絕倫。能在這場充滿規則的對局裡展現出如此算計，你確實有資格成為破詛者的一員。來吧，讓我們一起去看看這座城市表象之下的真實法則……' 
+  },
+  { id: 'hug', name: '哈格', element: '無能力', color: '#e65100', border: '#b0bec5', 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
+    bgUrl: 'images/hug_bg.webp', isLandscape: true, cleared: false, 
+    cheers: ['哇啊！這速度比我在巴圖利亞的密林裡跑腿還要快呢！', '太帥啦！再多讓我抱一下沾沾好運嘛！'], 
+    endingText: '你簡直就像傳說中的狼神一樣可靠啊！巴圖利亞的每一條小徑我都熟得很，以後不管要去狼人村還是貓族村，只要一聲令下，我這雙飛毛腿立刻替你帶路！' 
+  },
+  { id: 'ermuqi', name: '厄木齊', element: '無能力', color: '#1b5e20', border: '#b0bec5', 
+    type: 'none', roleType: '無能力者', reqLeader: 13, reqSupport: 15, 
+    desc: '【應援】轉襲 2 顆黃金珠，落下 2 顆萬配珠，並消除 5 顆妨礙珠。', 
+    bgUrl: 'images/ermuqi_bg.webp', isLandscape: true, cleared: false, 
+    cheers: ['呼……火候總算穩定下來了，可別突然從背後嚇我啊！', '氣味很不錯，這副草藥湯看來確實派上用場了。'], 
+    endingText: '你身上沒有半點令人討厭的惡意，反倒有股使人安心的沉穩呢。辛苦了，我剛熬好一鍋藥草湯，雖然苦了點但對恢復精神很有幫助，快過來趁熱喝了吧。' 
   }
 ];
 
@@ -1650,6 +1680,8 @@ let isNegativeSealActive = false;
 let negativeSealTimer = 0;
 let rakuNextGoldWave = false;
 let zarionBigDropEndTimer = 0;
+let rinBigDropEndTimer = 0;       // 🌟 新增：嶙安 5 秒落下變大計時
+let wesaidChaosEndTimer = 0;      // 🌟 新增：維賽德 5 秒落下大小不定計時
 let lateralGravityTimer = 0;
 let lateralGravityDir = 0;
 let windStormTimer = 0;
@@ -2433,13 +2465,15 @@ function getRandomWeightedChar() {
 function spawnSingleBall(x, y, forcedChar = null, isSpecialOrb = false, isBlackBall = false, isFrozenBall = false, isGreenBall = false, isGoldBall = false, isAttributePending = false, isSmallBall = false, isBlindBlack = false, isChainLocked = false, isBomb = false, isHourglass = false, isFrenzy = false, isShield = false) {
   const char = forcedChar || getRandomWeightedChar();
   
-  let isKokumeiChaos = performance.now() < (window.kokumeiChaosEndTimer || 0);
-  let isSmall = isSmallBall || (performance.now() < oaeSmallDropTimer) || (isKokumeiChaos && Math.random() < 0.5);
+  let isChaosActive = (performance.now() < (window.kokumeiChaosEndTimer || 0)) || (performance.now() < wesaidChaosEndTimer);
+  let isBigDropActive = (performance.now() < zarionBigDropEndTimer) || (performance.now() < rinBigDropEndTimer);
+
+  let isSmall = isSmallBall || (performance.now() < oaeSmallDropTimer) || (isChaosActive && Math.random() < 0.5);
   
   let radius = BALL_RADIUS;
   if (isSpecialOrb) radius = SPECIAL_ORB_RADIUS;
   else if (isSmall) radius = BALL_RADIUS * 0.65;
-  else if (performance.now() < zarionBigDropEndTimer || (isKokumeiChaos && !isSmall)) radius = BALL_RADIUS * 1.25;
+  else if (isBigDropActive || (isChaosActive && !isSmall)) radius = BALL_RADIUS * 1.25;
 
   let densityVal = 0.002;
   if (isSpecialOrb) densityVal = 0.0032;
@@ -3255,6 +3289,36 @@ function triggerCharSkillEffect(charId) {
       spawnSingleBall(VIRTUAL_WIDTH/2, 60, char, true);
       break;
 
+    case 'wesaid':
+      showBanner('【地脈操流】維賽德引發 1.5 秒引力黑洞、5 秒內落下珠子大小不定，並落下 2 顆超載珠！');
+      blackHolePos = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT * 0.45 };
+      blackHoleTimer = 1.5;
+      wesaidChaosEndTimer = performance.now() + 5000;
+
+      for (let i = 0; i < 2; i++) {
+        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, true, false);
+      }
+      break;
+
+    case 'rin':
+      showBanner('【土元素・破詛】嶙安發動地震波、5 秒內落下珠子變大、縮小 3 珠！');
+      screenShakeTimer = 0.30;
+      rinBigDropEndTimer = performance.now() + 5000;
+
+      // 縮小盤面上 3 顆珠子
+      const cleanBallsRin = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrenzy);
+      const shuffledRin = [...cleanBallsRin].sort(() => Math.random() - 0.5);
+      shuffledRin.slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 0.65));
+
+      balls.forEach(b => {
+        if (b.position.y > VIRTUAL_HEIGHT * 0.60) {
+          const upwardForce = -(Math.random() * 5.3 + 11.3);
+          const jitterX = (Math.random() - 0.5) * 6.6;
+          Body.setVelocity(b, { x: b.velocity.x + jitterX, y: upwardForce });
+          triggerSpark(b.position.x, b.position.y, '#8bc34a');
+        }
+      });
+      break;  
     case 'kulu': 
     case 'lanlan':
     case 'arc':
@@ -3485,19 +3549,47 @@ function triggerAttributeAsPending(char) {
 function executeAttributePendingAction(ball) {
   const el = ball.charData.element;
   const charId = ball.charData.id;
+  const isNegativeRole = ball.charData.type === 'negative';
   playSynthPopSFX();
   World.remove(world, ball);
   const idx = balls.indexOf(ball);
   if (idx !== -1) balls.splice(idx, 1);
 
-  // 🌟 屬性能力者消除屬性待發珠時，計入隊長技能次數
+  // 隊長技能次數計算
   checkLeaderSkillProgress(charId);
+
+  // 若為妨礙系角色（嶙安、維賽德），且高和的「恆定」正在生效，直接攔截
+  if (isNegativeRole && isNegativeSealActive) {
+    showBanner(`【恆定】成功阻止了 ${ball.charData.name} 的妨礙效果！`);
+    return;
+  }
 
   if (isSkillSealActive) {
     createVFX(ball.position.x, ball.position.y, '#5c6bc0', 16);
     showBanner('【奪取】權能封印中');
     return;
   }
+
+  // 🌟 曜空翔羽：全屬性
+  if (el.includes('全')) {
+    removeRandomObstacles(5);
+    balls.forEach(b => {
+      if (b.isBlindBlack) b.isBlindBlack = false;
+    });
+    windCenter = { x: VIRTUAL_WIDTH / 2, y: VIRTUAL_HEIGHT * 0.65 };
+    windStormTimer = 1.5;
+    lateralGravityDir = 1;
+
+    const cleanBallsAll = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall && !b.isFrenzy);
+    const shuffledAll = [...cleanBallsAll].sort(() => Math.random() - 0.5);
+    shuffledAll.slice(0, 3).forEach(b => { b.isGoldBall = true; createVFX(b.position.x, b.position.y, '#ffd700', 10); });
+    shuffledAll.slice(3, 6).forEach(b => { b.isFrenzy = true; createVFX(b.position.x, b.position.y, '#e07b46', 10); });
+
+    updateScore(500);
+    showBanner('【全屬性】破除黑幕、引發暴風，轉襲 3 顆金珠與 3 顆萬配珠，並消除 5 顆妨礙珠！');
+    return;
+  }
+
 
   if (el.includes('冰')) {
     const removedCount = removeRandomObstacles(5);
@@ -3510,7 +3602,9 @@ function executeAttributePendingAction(ball) {
     return;
   }
 
-  removeRandomObstacles(5);
+  if (charId !== 'rin') {
+    removeRandomObstacles(5);
+  }
 
   if (el.includes('光') || charId === 'arashiyama' || charId === 'fox') {
     let unblindCount = 0;
@@ -3585,9 +3679,8 @@ function executeAttributePendingAction(ball) {
     shuffledWater.slice(3, 6).forEach(b => { b.isFrenzy = true; });
 
     showBanner('【水元素】將 3 顆角色珠尺寸變大、轉襲 3 顆萬配珠，5 秒內消除每球 500 分，漂浮 2 秒並消除 5 顆妨礙珠！');
-  } else if (el.includes('土')) {
+} else if (el.includes('土')) {
     screenShakeTimer = 0.30;
-    // 土屬性：盤面 3 顆珠子變小，並落下 3 顆萬配珠
     const cleanBallsSoil = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrenzy);
     const shuffledSoil = [...cleanBallsSoil].sort(() => Math.random() - 0.5);
     shuffledSoil.slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 0.65));
@@ -3601,7 +3694,7 @@ function executeAttributePendingAction(ball) {
         triggerSpark(b.position.x, b.position.y, '#8bc34a');
       }
     });
-    showBanner('【土元素】發動地震波，將 3 顆角色珠尺寸變小，轉襲 3 顆萬配珠，並消除 5 顆妨礙珠！');
+    showBanner('【土元素】引發地震波，將 3 顆角色珠尺寸變小、轉襲 3 顆萬配珠，並消除 5 顆妨礙珠！');
   } else if (el.includes('雷') || charId === 'electric') {
     const normals = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isGoldBall).sort(() => Math.random() - 0.5).slice(0, 3);
     normals.forEach(b => { 
@@ -3631,7 +3724,6 @@ function executeAttributePendingAction(ball) {
     showBanner('【重力元素】反轉重力 1 秒，將 3 顆角色珠尺寸變小，落下 3 顆延時珠，並消除 5 顆妨礙珠！');
   }
 }
-
 function applyAttributeEffect(char) {
   triggerAttributeAsPending(char);
 }
@@ -3739,7 +3831,9 @@ function triggerMilestone(charId) {
     playSynthPopSFX();
     return;
   }
-  if (char.roleType === '賦形者') {
+
+  // 🌟 將維賽德與嶙安（type === 'negative'）歸類為直接自動施放技能
+  if (char.roleType === '賦形者' || char.type === 'negative') {
     triggerCharSkillEffect(charId);
     setDialogue(char.name, `「${char.desc}」`);
   } else if (char.roleType === '無能力者') {
@@ -4187,6 +4281,14 @@ function mainRender(now) {
     if (zarionBigDropEndTimer > performance.now()) {
       const bigDropLeft = ((zarionBigDropEndTimer - performance.now()) / 1000).toFixed(1);
       activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(255,167,38,0.85);"><span>成長</span><span>${bigDropLeft}s</span></div>`;
+    }
+    if (rinBigDropEndTimer > performance.now()) {
+      const rinBigLeft = ((rinBigDropEndTimer - performance.now()) / 1000).toFixed(1);
+      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(51,105,30,0.92); border:1px solid #8bc34a;"><span>膨脹</span><span>${rinBigLeft}s</span></div>`;
+    }
+    if (wesaidChaosEndTimer > performance.now()) {
+      const wesaidChaosLeft = ((wesaidChaosEndTimer - performance.now()) / 1000).toFixed(1);
+      activeEffectsHtml += `<div class="effect-timer-node" style="background:rgba(136,14,79,0.92); border:1px solid #ec407a;"><span>失序</span><span>${wesaidChaosLeft}s</span></div>`;
     }
     if (window.kokumeiChaosEndTimer && window.kokumeiChaosEndTimer > performance.now()) {
       const chaosLeft = ((window.kokumeiChaosEndTimer - performance.now()) / 1000).toFixed(1);
