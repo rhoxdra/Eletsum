@@ -300,13 +300,15 @@ canvas { width: 100%; height: 100%; display: block; mix-blend-mode: screen; touc
       width: 100%;
     }
 
-    .title-logo { 
-      font-size: clamp(32px, 5.5vh, 44px); 
-      font-weight: 900; 
-      letter-spacing: 6px; 
-      color: #e07b46; 
-      text-shadow: 0 0 20px rgba(224, 123, 70, 0.6), 0 2px 4px rgba(0, 0, 0, 0.8); 
-      margin-bottom: 4px; 
+    .title-logo-banner {
+      display: block;
+      width: 76%;
+      max-width: 280px;
+      max-height: 11vh;
+      height: auto;
+      object-fit: contain;
+      margin: 0 auto 8px;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.85));
     }
 
     .title-sub { 
@@ -607,7 +609,7 @@ canvas { width: 100%; height: 100%; display: block; mix-blend-mode: screen; touc
 
     <div id="title-screen" class="overlay-modal">
       <div class="title-header-group">
-        <div class="title-logo">無限元素</div>
+        <img src="images/banner.webp" alt="無限元素" class="title-logo-banner">
         <div class="title-sub">CHAIN BURST</div>
         <p class="title-desc">
           <br><br>
@@ -1514,12 +1516,12 @@ const CHARACTER_DATABASE = [
     cheers: ['等待是值得的，頭條新聞有著落了！', '取材順利，這篇報導一定能大紅大紫！'], 
     endingText: '幸虧有你一路從旁鼎力相助，我們才能成功捕捉到眼前這幕如此關鍵的決定性瞬間。放心吧，我會把這份獨家真相毫無保留地呈獻給全世界，明天的頭條版面絕對會讓所有人大開眼界！' 
   },
-  { id: 'rin', name: '嶙安', element: '土屬性', color: '#33691e', border: '#8bc34a', 
+ { id: 'rin', name: '嶙安', element: '重力屬性', color: '#33691e', border: '#8bc34a', 
     type: 'negative', roleType: '地脈操流者', reqLeader: 14, reqSupport: 15, 
-    desc: '【土屬性】發動地震波，5 秒內落下的角色珠尺寸變大，將 3 顆角色珠尺寸變小。', 
-    bgUrl: 'images/rin_break_bg.webp', isLandscape: true, cleared: false, 
+    desc: '【重力屬性】發動地震波與反轉重力 1 秒，5 秒內落下的角色珠尺寸變大，將 3 顆角色珠尺寸變小，並落下 3 顆延時珠。', 
+    bgUrl: 'images/rin_bg.webp', isLandscape: true, cleared: false, 
     cheers: ['這股湧上來的地脈力量……我已經不再是過去那個軟弱的雜工了！', '看好了，這就是我親手握住的全新力量！'], 
-    endingText: '呼……呼……直到遇見維賽德大人並觸碰共鳴石的那一刻，我從來都沒想過自己竟然也能掌握如此強大的地脈之力……過去的軟弱已經徹底斬斷了，接下來的戰鬥，我會用這雙拳頭開闢屬於我們的道路！' 
+    endingText: '呼……呼……直到遇見維賽德大人並觸碰共鳴石的那一刻，我從來都沒想過自己竟然也能掌握如此強大的地脈之力……過去的軟弱已經徹底斬斷了，接下來的暗戰，我會用這雙拳頭和重力開闢屬於我們的道路！' 
   },
   { id: 'cat', name: '瑟莉雅', element: '土屬性', color: '#546e7a', border: '#8bc34a', 
     type: 'none', roleType: '地脈操流者', reqLeader: 13, reqSupport: 15, 
@@ -3301,15 +3303,24 @@ function triggerCharSkillEffect(charId) {
       break;
 
     case 'rin':
-      showBanner('【土元素・破詛】嶙安發動地震波、5 秒內落下珠子變大、縮小 3 珠！');
+      showBanner('【重力】發動地震波、反轉重力 1 秒、5 秒內落下珠子變大、縮小 3 珠，並落下 3 顆延時珠！');
+      
+      // 1. 觸發畫面劇烈震動
       screenShakeTimer = 0.30;
+
+      // 2. 啟動重力反轉 1 秒
+      engine.gravity.y = -BASE_GRAVITY;
+      gravityEffectTimer = 1.0;
+
+      // 3. 啟動 5 秒內落下珠子變大計時
       rinBigDropEndTimer = performance.now() + 5000;
 
-      // 縮小盤面上 3 顆珠子
+      // 4. 縮小盤面上 3 顆普通珠子
       const cleanBallsRin = balls.filter(b => !b.isSpecialOrb && !b.isAttributePending && !b.isFrenzy);
       const shuffledRin = [...cleanBallsRin].sort(() => Math.random() - 0.5);
       shuffledRin.slice(0, 3).forEach(b => resizeBallBody(b, BALL_RADIUS * 0.65));
 
+      // 5. 讓下方棋子受地震波影響往上彈起並帶有土綠色火花
       balls.forEach(b => {
         if (b.position.y > VIRTUAL_HEIGHT * 0.60) {
           const upwardForce = -(Math.random() * 5.3 + 11.3);
@@ -3318,7 +3329,12 @@ function triggerCharSkillEffect(charId) {
           triggerSpark(b.position.x, b.position.y, '#8bc34a');
         }
       });
-      break;  
+
+      // 6. 落下 3 顆延時珠
+      for (let i = 0; i < 3; i++) {
+        spawnSingleBall(Math.random() * (VIRTUAL_WIDTH - 80) + 40, -BALL_RADIUS - (i * 30), getRandomWeightedChar(), false, false, false, false, false, false, false, false, false, false, true);
+      }
+      break;
     case 'kulu': 
     case 'lanlan':
     case 'arc':
